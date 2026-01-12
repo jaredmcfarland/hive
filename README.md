@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/yourusername/hive/main/docs/assets/hive-logo.png" alt="Hive Logo" width="120" />
+  <img src="hive-logo.png" alt="Hive Logo" width="120" />
 </p>
 
 <h1 align="center">Hive</h1>
