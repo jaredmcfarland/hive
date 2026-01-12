@@ -23,11 +23,11 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project directory structure per plan.md in src/hive/
-- [ ] T002 Create pyproject.toml with dependencies: typer, rich, sqlmodel, pydantic, pydantic-settings, aiosqlite
-- [ ] T003 [P] Create src/hive/__init__.py with version and placeholder exports
-- [ ] T004 [P] Create tests/conftest.py with shared pytest fixtures
-- [ ] T005 [P] Configure ruff for linting in pyproject.toml
+- [X] T001 Create project directory structure per plan.md in src/hive/
+- [X] T002 Create pyproject.toml with dependencies: typer, rich, sqlmodel, pydantic, pydantic-settings, aiosqlite
+- [X] T003 [P] Create src/hive/__init__.py with version and placeholder exports
+- [X] T004 [P] Create tests/conftest.py with shared pytest fixtures
+- [X] T005 [P] Configure ruff for linting in pyproject.toml
 
 ---
 
@@ -37,10 +37,10 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Create src/hive/errors.py with HiveError, CommandError, ConfigurationError classes
-- [ ] T007 Create src/hive/core/__init__.py with submodule exports
-- [ ] T008 [P] Create src/hive/runtime/__init__.py with submodule exports
-- [ ] T009 [P] Create src/hive/generators/__init__.py with submodule exports
+- [X] T006 Create src/hive/errors.py with HiveError, CommandError, ConfigurationError classes
+- [X] T007 Create src/hive/core/__init__.py with submodule exports
+- [X] T008 [P] Create src/hive/runtime/__init__.py with submodule exports
+- [X] T009 [P] Create src/hive/generators/__init__.py with submodule exports
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -56,27 +56,27 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for @command decorator registration in tests/contract/test_decorators.py
-- [ ] T011 [P] [US1] Contract test for @query decorator registration in tests/contract/test_decorators.py
-- [ ] T012 [P] [US1] Contract test for registry query methods in tests/contract/test_registry.py
-- [ ] T013 [P] [US1] Contract test for duplicate name rejection in tests/contract/test_registry.py
+- [X] T010 [P] [US1] Contract test for @command decorator registration in tests/contract/test_decorators.py
+- [X] T011 [P] [US1] Contract test for @query decorator registration in tests/contract/test_decorators.py
+- [X] T012 [P] [US1] Contract test for registry query methods in tests/contract/test_registry.py
+- [X] T013 [P] [US1] Contract test for duplicate name rejection in tests/contract/test_registry.py
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Create ParameterInfo dataclass in src/hive/core/types.py
-- [ ] T015 [P] [US1] Create CommandRegistration dataclass in src/hive/core/types.py
-- [ ] T016 [P] [US1] Create QueryRegistration dataclass in src/hive/core/types.py
-- [ ] T017 [US1] Create ApplicationRegistry class with command/query storage in src/hive/core/registry.py
-- [ ] T018 [US1] Implement register_command() method in src/hive/core/registry.py
-- [ ] T019 [US1] Implement register_query() method in src/hive/core/registry.py
-- [ ] T020 [US1] Implement get_command(), list_commands() methods in src/hive/core/registry.py
-- [ ] T021 [US1] Implement duplicate name detection with error in src/hive/core/registry.py
-- [ ] T022 [US1] Create @command decorator factory in src/hive/core/decorators.py
-- [ ] T023 [US1] Create @query decorator factory in src/hive/core/decorators.py
-- [ ] T024 [US1] Implement parameter extraction using inspect.signature() in src/hive/core/decorators.py
-- [ ] T025 [US1] Implement return type extraction using get_type_hints() in src/hive/core/decorators.py
-- [ ] T026 [US1] Create App class with registry in src/hive/app.py
-- [ ] T027 [US1] Export App, command, query from src/hive/__init__.py
+- [X] T014 [P] [US1] Create ParameterInfo dataclass in src/hive/core/types.py
+- [X] T015 [P] [US1] Create CommandRegistration dataclass in src/hive/core/types.py
+- [X] T016 [P] [US1] Create QueryRegistration dataclass in src/hive/core/types.py
+- [X] T017 [US1] Create ApplicationRegistry class with command/query storage in src/hive/core/registry.py
+- [X] T018 [US1] Implement register_command() method in src/hive/core/registry.py
+- [X] T019 [US1] Implement register_query() method in src/hive/core/registry.py
+- [X] T020 [US1] Implement get_command(), list_commands() methods in src/hive/core/registry.py
+- [X] T021 [US1] Implement duplicate name detection with error in src/hive/core/registry.py
+- [X] T022 [US1] Create @command decorator factory in src/hive/core/decorators.py
+- [X] T023 [US1] Create @query decorator factory in src/hive/core/decorators.py
+- [X] T024 [US1] Implement parameter extraction using inspect.signature() in src/hive/core/decorators.py
+- [X] T025 [US1] Implement return type extraction using get_type_hints() in src/hive/core/decorators.py
+- [X] T026 [US1] Create App class with registry in src/hive/app.py
+- [X] T027 [US1] Export App, command, query from src/hive/__init__.py
 
 **Checkpoint**: User Story 1 complete - decorators register commands/queries with full metadata
 
@@ -90,22 +90,22 @@
 
 ### Tests for User Story 2
 
-- [ ] T028 [P] [US2] Contract test for @entity decorator registration in tests/contract/test_decorators.py
-- [ ] T029 [P] [US2] Contract test for entity field extraction in tests/contract/test_decorators.py
-- [ ] T030 [P] [US2] Contract test for entity relationship capture in tests/contract/test_registry.py
+- [X] T028 [P] [US2] Contract test for @entity decorator registration in tests/contract/test_decorators.py
+- [X] T029 [P] [US2] Contract test for entity field extraction in tests/contract/test_decorators.py
+- [X] T030 [P] [US2] Contract test for entity relationship capture in tests/contract/test_registry.py
 
 ### Implementation for User Story 2
 
-- [ ] T031 [P] [US2] Create FieldInfo dataclass in src/hive/core/types.py
-- [ ] T032 [P] [US2] Create RelationshipInfo dataclass in src/hive/core/types.py
-- [ ] T033 [US2] Create EntityRegistration dataclass in src/hive/core/types.py
-- [ ] T034 [US2] Add entity storage to ApplicationRegistry in src/hive/core/registry.py
-- [ ] T035 [US2] Implement register_entity() method in src/hive/core/registry.py
-- [ ] T036 [US2] Implement get_entity(), list_entities() methods in src/hive/core/registry.py
-- [ ] T037 [US2] Create @entity decorator factory in src/hive/core/decorators.py
-- [ ] T038 [US2] Implement field extraction from SQLModel in src/hive/core/decorators.py
-- [ ] T039 [US2] Implement relationship detection in src/hive/core/decorators.py
-- [ ] T040 [US2] Export entity decorator from src/hive/__init__.py
+- [X] T031 [P] [US2] Create FieldInfo dataclass in src/hive/core/types.py
+- [X] T032 [P] [US2] Create RelationshipInfo dataclass in src/hive/core/types.py
+- [X] T033 [US2] Create EntityRegistration dataclass in src/hive/core/types.py
+- [X] T034 [US2] Add entity storage to ApplicationRegistry in src/hive/core/registry.py
+- [X] T035 [US2] Implement register_entity() method in src/hive/core/registry.py
+- [X] T036 [US2] Implement get_entity(), list_entities() methods in src/hive/core/registry.py
+- [X] T037 [US2] Create @entity decorator factory in src/hive/core/decorators.py
+- [X] T038 [US2] Implement field extraction from SQLModel in src/hive/core/decorators.py
+- [X] T039 [US2] Implement relationship detection in src/hive/core/decorators.py
+- [X] T040 [US2] Export entity decorator from src/hive/__init__.py
 
 **Checkpoint**: User Story 2 complete - entities register with schema metadata
 
@@ -119,25 +119,25 @@
 
 ### Tests for User Story 3
 
-- [ ] T041 [P] [US3] Integration test for context database session in tests/integration/test_context_lifecycle.py
-- [ ] T042 [P] [US3] Integration test for context transaction rollback on error in tests/integration/test_context_lifecycle.py
-- [ ] T043 [P] [US3] Unit test for config loading from env vars in tests/unit/test_config_loading.py
-- [ ] T044 [P] [US3] Unit test for OutputFormatter JSON mode in tests/unit/test_output_formatter.py
-- [ ] T045 [P] [US3] Unit test for OutputFormatter table mode in tests/unit/test_output_formatter.py
+- [X] T041 [P] [US3] Integration test for context database session in tests/integration/test_context_lifecycle.py
+- [X] T042 [P] [US3] Integration test for context transaction rollback on error in tests/integration/test_context_lifecycle.py
+- [X] T043 [P] [US3] Unit test for config loading from env vars in tests/unit/test_config_loading.py
+- [X] T044 [P] [US3] Unit test for OutputFormatter JSON mode in tests/unit/test_output_formatter.py
+- [X] T045 [P] [US3] Unit test for OutputFormatter table mode in tests/unit/test_output_formatter.py
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Create AppSettings with Pydantic Settings in src/hive/runtime/config.py
-- [ ] T047 [US3] Create OutputFormat enum in src/hive/runtime/output.py
-- [ ] T048 [US3] Create OutputFormatter class with result(), info(), warning() methods in src/hive/runtime/output.py
-- [ ] T049 [US3] Implement JSON output mode in OutputFormatter in src/hive/runtime/output.py
-- [ ] T050 [US3] Implement table output mode with Rich in OutputFormatter in src/hive/runtime/output.py
-- [ ] T051 [US3] Create async database session factory in src/hive/runtime/database.py
-- [ ] T052 [US3] Create ExecutionContext class in src/hive/runtime/context.py
-- [ ] T053 [US3] Implement context manager __aenter__/__aexit__ in src/hive/runtime/context.py
-- [ ] T054 [US3] Implement transaction commit on success in src/hive/runtime/context.py
-- [ ] T055 [US3] Implement transaction rollback on exception in src/hive/runtime/context.py
-- [ ] T056 [US3] Wire context creation into command invocation in src/hive/app.py
+- [X] T046 [US3] Create AppSettings with Pydantic Settings in src/hive/runtime/config.py
+- [X] T047 [US3] Create OutputFormat enum in src/hive/runtime/output.py
+- [X] T048 [US3] Create OutputFormatter class with result(), info(), warning() methods in src/hive/runtime/output.py
+- [X] T049 [US3] Implement JSON output mode in OutputFormatter in src/hive/runtime/output.py
+- [X] T050 [US3] Implement table output mode with Rich in OutputFormatter in src/hive/runtime/output.py
+- [X] T051 [US3] Create async database session factory in src/hive/runtime/database.py
+- [X] T052 [US3] Create ExecutionContext class in src/hive/runtime/context.py
+- [X] T053 [US3] Implement context manager __aenter__/__aexit__ in src/hive/runtime/context.py
+- [X] T054 [US3] Implement transaction commit on success in src/hive/runtime/context.py
+- [X] T055 [US3] Implement transaction rollback on exception in src/hive/runtime/context.py
+- [X] T056 [US3] Wire context creation into command invocation in src/hive/app.py
 
 **Checkpoint**: User Story 3 complete - commands receive working context with all services
 
@@ -151,23 +151,23 @@
 
 ### Tests for User Story 4
 
-- [ ] T057 [P] [US4] Contract test for CLI generation from registry in tests/contract/test_cli_generation.py
-- [ ] T058 [P] [US4] Contract test for --json flag output in tests/contract/test_cli_generation.py
-- [ ] T059 [P] [US4] Contract test for --help output in tests/contract/test_cli_generation.py
-- [ ] T060 [P] [US4] Integration test for end-to-end command execution in tests/integration/test_end_to_end.py
+- [X] T057 [P] [US4] Contract test for CLI generation from registry in tests/contract/test_cli_generation.py
+- [X] T058 [P] [US4] Contract test for --json flag output in tests/contract/test_cli_generation.py
+- [X] T059 [P] [US4] Contract test for --help output in tests/contract/test_cli_generation.py
+- [X] T060 [P] [US4] Integration test for end-to-end command execution in tests/integration/test_end_to_end.py
 
 ### Implementation for User Story 4
 
-- [ ] T061 [US4] Create CLIGenerator class in src/hive/generators/cli.py
-- [ ] T062 [US4] Implement Typer app creation from registry in src/hive/generators/cli.py
-- [ ] T063 [US4] Implement command registration with Typer in src/hive/generators/cli.py
-- [ ] T064 [US4] Implement async-to-sync wrapper for Typer in src/hive/generators/cli.py
-- [ ] T065 [US4] Implement parameter mapping to Typer arguments/options in src/hive/generators/cli.py
-- [ ] T066 [US4] Implement --json flag injection on all commands in src/hive/generators/cli.py
-- [ ] T067 [US4] Implement --format flag for output format selection in src/hive/generators/cli.py
-- [ ] T068 [US4] Implement help text generation from docstrings in src/hive/generators/cli.py
-- [ ] T069 [US4] Add cli() method to App class in src/hive/app.py
-- [ ] T070 [US4] Wire output format from CLI flags to context in src/hive/generators/cli.py
+- [X] T061 [US4] Create CLIGenerator class in src/hive/generators/cli.py
+- [X] T062 [US4] Implement Typer app creation from registry in src/hive/generators/cli.py
+- [X] T063 [US4] Implement command registration with Typer in src/hive/generators/cli.py
+- [X] T064 [US4] Implement async-to-sync wrapper for Typer in src/hive/generators/cli.py
+- [X] T065 [US4] Implement parameter mapping to Typer arguments/options in src/hive/generators/cli.py
+- [X] T066 [US4] Implement --json flag injection on all commands in src/hive/generators/cli.py
+- [X] T067 [US4] Implement --format flag for output format selection in src/hive/generators/cli.py
+- [X] T068 [US4] Implement help text generation from docstrings in src/hive/generators/cli.py
+- [X] T069 [US4] Add cli() method to App class in src/hive/app.py
+- [X] T070 [US4] Wire output format from CLI flags to context in src/hive/generators/cli.py
 
 **Checkpoint**: User Story 4 complete - full CLI generated from decorated commands
 
@@ -181,20 +181,20 @@
 
 ### Tests for User Story 5
 
-- [ ] T071 [P] [US5] Contract test for @screen decorator registration in tests/contract/test_decorators.py
-- [ ] T072 [P] [US5] Contract test for default screen validation (only one allowed) in tests/contract/test_registry.py
-- [ ] T073 [P] [US5] Contract test for keybinding uniqueness in tests/contract/test_registry.py
+- [X] T071 [P] [US5] Contract test for @screen decorator registration in tests/contract/test_decorators.py
+- [X] T072 [P] [US5] Contract test for default screen validation (only one allowed) in tests/contract/test_registry.py
+- [X] T073 [P] [US5] Contract test for keybinding uniqueness in tests/contract/test_registry.py
 
 ### Implementation for User Story 5
 
-- [ ] T074 [US5] Create ScreenRegistration dataclass in src/hive/core/types.py
-- [ ] T075 [US5] Add screen storage to ApplicationRegistry in src/hive/core/registry.py
-- [ ] T076 [US5] Implement register_screen() method in src/hive/core/registry.py
-- [ ] T077 [US5] Implement default screen validation (only one) in src/hive/core/registry.py
-- [ ] T078 [US5] Implement keybinding uniqueness validation in src/hive/core/registry.py
-- [ ] T079 [US5] Implement get_screen(), list_screens() methods in src/hive/core/registry.py
-- [ ] T080 [US5] Create @screen decorator factory in src/hive/core/decorators.py
-- [ ] T081 [US5] Export screen decorator from src/hive/__init__.py
+- [X] T074 [US5] Create ScreenRegistration dataclass in src/hive/core/types.py
+- [X] T075 [US5] Add screen storage to ApplicationRegistry in src/hive/core/registry.py
+- [X] T076 [US5] Implement register_screen() method in src/hive/core/registry.py
+- [X] T077 [US5] Implement default screen validation (only one) in src/hive/core/registry.py
+- [X] T078 [US5] Implement keybinding uniqueness validation in src/hive/core/registry.py
+- [X] T079 [US5] Implement get_screen(), list_screens() methods in src/hive/core/registry.py
+- [X] T080 [US5] Create @screen decorator factory in src/hive/core/decorators.py
+- [X] T081 [US5] Export screen decorator from src/hive/__init__.py
 
 **Checkpoint**: User Story 5 complete - screens register with navigation metadata
 
@@ -204,13 +204,13 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T082 Implement app.validate() method to check all registrations in src/hive/app.py
-- [ ] T083 [P] Add Argument and Option types for Annotated hints in src/hive/core/types.py
-- [ ] T084 [P] Export Argument, Option from src/hive/__init__.py
-- [ ] T085 Add comprehensive docstrings to all public APIs
-- [ ] T086 Run quickstart.md validation - create and test example app
-- [ ] T087 Verify all tests pass with pytest
-- [ ] T088 Run ruff linting and fix issues
+- [X] T082 Implement app.validate() method to check all registrations in src/hive/app.py
+- [X] T083 [P] Add Argument and Option types for Annotated hints in src/hive/core/types.py
+- [X] T084 [P] Export Argument, Option from src/hive/__init__.py
+- [X] T085 Add comprehensive docstrings to all public APIs
+- [X] T086 Run quickstart.md validation - create and test example app
+- [X] T087 Verify all tests pass with pytest
+- [X] T088 Run ruff linting and fix issues
 
 ---
 
