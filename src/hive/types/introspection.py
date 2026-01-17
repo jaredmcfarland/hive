@@ -96,7 +96,22 @@ def extract_constraints(type_hint: Any) -> ConstraintInfo | None:
 
 
 def _get_validator_source(validator: Any) -> str | None:
-    """Extract source code from a beartype validator."""
+    """
+    Extract the original lambda source code from a beartype Is[] validator.
+
+    This uses CPython internals because beartype wraps the user's lambda in its
+    own validation machinery. Direct inspect.getsource() returns beartype's wrapper,
+    not the original constraint like `lambda x: x > 0`.
+
+    To recover the original source, we inspect the closure cells (`__closure__`)
+    of beartype's `_is_valid` function. Closure cells store variables captured from
+    enclosing scopes - including the original lambda passed to Is[]. We search
+    for callable objects in these cells and extract their source.
+
+    Note: This relies on CPython implementation details and may break if beartype
+    changes its internal structure. It's a best-effort optimization for generating
+    helpful error messages and Hypothesis strategies.
+    """
     try:
         # Try closure variables first - beartype stores the original lambda source there
         if hasattr(validator, "_is_valid"):
@@ -112,6 +127,8 @@ def _get_validator_source(validator: Any) -> str | None:
                             if "lambda" in source:
                                 candidates.append(source)
                     except (ValueError, TypeError, OSError):
+                        # Closure cells may not be inspectable (empty cells raise ValueError)
+                        # or may contain non-callable values; skip and try other candidates
                         pass
                 # Prefer the source that looks like an actual constraint lambda
                 # (contains comparison operators or function calls like re.match)
@@ -190,6 +207,7 @@ def _extract_numeric_bounds(
         if min_val is not None or max_val is not None:
             return (min_val, max_val)
     except Exception:
+        # Bounds extraction is best-effort; source may be unavailable or unparseable
         pass
 
     return None
@@ -207,6 +225,7 @@ def _extract_string_pattern(validator: Any) -> str | None:
         if match:
             return match.group(1)
     except Exception:
+        # Pattern extraction is best-effort; malformed source or complex validators may fail
         pass
 
     return None
@@ -245,6 +264,7 @@ def _extract_length_constraints(
         if min_len is not None or max_len is not None:
             return (min_len, max_len)
     except Exception:
+        # Length extraction is optional; fall back to no length constraints on failure
         pass
 
     return None

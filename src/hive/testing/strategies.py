@@ -108,9 +108,10 @@ def _strategy_for_annotated(type_hint: Any) -> SearchStrategy[Any]:
                 max_size=constraints.max_length or 100,
             )
 
-        # Apply validator as filter (fallback for complex constraints)
-        # Already handled numeric bounds above
-        if constraints.validator and base_type not in (int, float) and base_type is str and not constraints.pattern:
+        # The introspection above (bounds, patterns, lengths) optimizes generation,
+        # but the validator is the source of truth. Always apply it as the final
+        # filter to ensure correctness for complex constraints (e.g., x % 2 == 0).
+        if constraints.validator:
             base_strategy = base_strategy.filter(constraints.validator)
 
     return base_strategy
