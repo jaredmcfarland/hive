@@ -37,6 +37,17 @@ from hive.types.strings import (
     FilePath,
     DirectoryPath,
 )
+from hive.types.numeric import (
+    Port,
+    HttpStatusCode,
+    UnixTimestamp,
+    Year,
+    Month,
+    Day,
+    Hour,
+    Minute,
+    Second,
+)
 
 __all__ = [
     # Integer refinements
@@ -60,4 +71,14 @@ __all__ = [
     "Url",
     "FilePath",
     "DirectoryPath",
+    # Numeric domain types
+    "Port",
+    "HttpStatusCode",
+    "UnixTimestamp",
+    "Year",
+    "Month",
+    "Day",
+    "Hour",
+    "Minute",
+    "Second",
 ]
