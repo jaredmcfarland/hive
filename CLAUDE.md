@@ -92,6 +92,90 @@ Commands receive `ctx` with:
 ## Active Technologies
 - Python 3.11+ (required for modern type hints including `X | None` syntax) + Typer, Rich, SQLModel, Pydantic, Pydantic-Settings (001-core-framework)
 - SQLite via SQLModel/SQLAlchemy (async support via aiosqlite) (001-core-framework)
+- beartype>=0.18.0 - Runtime type enforcement via refinement types
+- deal>=4.24.0 - Design-by-contract decorators (pre/post/inv)
+- hypothesis>=6.100.0 - Property-based testing (dev dependency)
+
+## Verification Stack
+
+Three-layer verification pyramid for runtime validation and testing.
+
+### Refinement Types
+
+Use from `hive.types` for automatic validation in command signatures:
+
+```python
+from hive import command, App
+from hive.types import PositiveInt, Percentage, Port, NonEmptyStr
+
+app = App("myapp")
+
+@command(app)
+async def set_priority(ctx, task_id: PositiveInt, progress: Percentage):
+    ...
+```
+
+**Numeric Types:**
+- `PositiveInt` - Integer > 0
+- `NonNegativeInt` - Integer >= 0
+- `NegativeInt` - Integer < 0
+- `PositiveFloat`, `NonNegativeFloat`
+- `UnitInterval` - Float 0.0-1.0
+- `Percentage` - Float 0.0-100.0
+- `Probability` - Alias for UnitInterval
+
+**Domain Types:**
+- `Port` - Valid TCP/UDP port (1-65535)
+- `HttpStatusCode` - HTTP status (100-599)
+- `Year`, `Month`, `Day`, `Hour`, `Minute`, `Second`
+
+**String Types:**
+- `NonEmptyStr` - Non-empty string
+- `TrimmedStr` - No leading/trailing whitespace
+- `Identifier` - Valid Python identifier
+- `Slug` - URL-safe (lowercase, hyphens)
+- `Email`, `Url`, `FilePath`
+
+### Contract Decorators
+
+Use from `hive.contracts` for explicit preconditions and postconditions:
+
+```python
+from hive import command, App
+from hive.contracts import requires, ensures
+
+app = App("myapp")
+
+@command(app)
+@requires(lambda ctx, task_id: task_id > 0, "Task ID must be positive")
+@ensures(lambda ctx, task_id, result: result.id == task_id)
+async def get_task(ctx, task_id: int) -> Task:
+    ...
+```
+
+- `@requires(condition, message)` - Precondition, raises CommandError if False
+- `@ensures(condition, message)` - Postcondition, validates return value
+- `@invariant(condition, message)` - Class invariant for entities
+
+### Testing Utilities
+
+Use from `hive.testing` for property-based testing:
+
+```python
+from hive.testing import strategy_for_type, MockExecutionContext
+from hive.types import PositiveInt
+from hypothesis import given
+
+@given(x=strategy_for_type(PositiveInt))
+def test_always_positive(x):
+    assert x > 0
+
+async def test_my_command():
+    async with MockExecutionContext() as ctx:
+        result = await my_command(ctx, arg="value")
+        assert ctx.db.add.called
+```
 
 ## Recent Changes
 - 001-core-framework: Added Python 3.11+ (required for modern type hints including `X | None` syntax) + Typer, Rich, SQLModel, Pydantic, Pydantic-Settings
+- verification-stack: Added beartype, deal, hypothesis for runtime validation and testing
