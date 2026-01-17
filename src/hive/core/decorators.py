@@ -10,6 +10,7 @@ from typing import Any, TypeVar, get_type_hints
 
 from hive.core.types import (
     CommandRegistration,
+    ConstraintMetadata,
     EntityRegistration,
     FieldInfo,
     ParameterInfo,
@@ -17,6 +18,7 @@ from hive.core.types import (
     QueryRegistration,
     ScreenRegistration,
 )
+from hive.types.introspection import extract_constraints
 
 # Type variable for preserving function signature
 F = TypeVar("F", bound=Callable[..., Any])
@@ -34,7 +36,8 @@ def _extract_parameters(func: Callable[..., Any]) -> list[ParameterInfo]:
     """
     sig = inspect.signature(func)
     try:
-        hints = get_type_hints(func)
+        # Use include_extras=True to preserve Annotated metadata for constraint extraction
+        hints = get_type_hints(func, include_extras=True)
     except Exception:
         hints = {}
 
@@ -55,8 +58,22 @@ def _extract_parameters(func: Callable[..., Any]) -> list[ParameterInfo]:
         else:
             kind = ParameterKind.KEYWORD
 
-        # Get type annotation
+        # Get type annotation (with Annotated metadata preserved)
         param_type = hints.get(name, Any)
+
+        # Extract constraint metadata from refinement types
+        constraint_info = extract_constraints(param_type)
+        constraints: ConstraintMetadata | None = None
+        if constraint_info:
+            constraints = ConstraintMetadata(
+                description=constraint_info.description,
+                min_value=constraint_info.min_value,
+                max_value=constraint_info.max_value,
+                pattern=constraint_info.pattern,
+                min_length=constraint_info.min_length,
+                max_length=constraint_info.max_length,
+                validator=constraint_info.validator,
+            )
 
         # Check for default value
         has_default = param.default is not inspect.Parameter.empty
@@ -69,6 +86,7 @@ def _extract_parameters(func: Callable[..., Any]) -> list[ParameterInfo]:
                 default=default,
                 has_default=has_default,
                 kind=kind,
+                constraints=constraints,
             )
         )
 
