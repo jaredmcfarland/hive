@@ -25,6 +25,18 @@ from hive.types.primitives import (
     Percentage,
     Probability,
 )
+from hive.types.strings import (
+    NonEmptyStr,
+    TrimmedStr,
+    LowercaseStr,
+    UppercaseStr,
+    Identifier,
+    Slug,
+    Email,
+    Url,
+    FilePath,
+    DirectoryPath,
+)
 
 __all__ = [
     # Integer refinements
@@ -37,4 +49,15 @@ __all__ = [
     "UnitInterval",
     "Percentage",
     "Probability",
+    # String refinements
+    "NonEmptyStr",
+    "TrimmedStr",
+    "LowercaseStr",
+    "UppercaseStr",
+    "Identifier",
+    "Slug",
+    "Email",
+    "Url",
+    "FilePath",
+    "DirectoryPath",
 ]
