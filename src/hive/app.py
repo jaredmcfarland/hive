@@ -62,7 +62,7 @@ class App:
         self._description = description
         self._cli_command = cli_command or name
         self._tui_title = tui_title or name
-        self._database = database or f"sqlite:///{Path.home()}/data.db"
+        self._database = database or f"sqlite:///{Path.home()}/.{name}/data.db"
         self._mcp_server = mcp_server
         self._rest_api = rest_api
 

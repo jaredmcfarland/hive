@@ -38,7 +38,7 @@ def _extract_parameters(func: Callable[..., Any]) -> list[ParameterInfo]:
     try:
         # Use include_extras=True to preserve Annotated metadata for constraint extraction
         hints = get_type_hints(func, include_extras=True)
-    except Exception:
+    except (NameError, TypeError, AttributeError):
         hints = {}
 
     params: list[ParameterInfo] = []
@@ -105,7 +105,7 @@ def _extract_return_type(func: Callable[..., Any]) -> type | None:
     try:
         hints = get_type_hints(func)
         return hints.get("return")
-    except Exception:
+    except (NameError, TypeError, AttributeError):
         return None
 
 
