@@ -1,6 +1,5 @@
 """Test Hypothesis strategies for Hive refinement types."""
 
-import pytest
 from hypothesis import given, settings
 
 
@@ -11,8 +10,6 @@ class TestStrategyForType:
     @settings(max_examples=50)
     def test_generates_valid_positive_int(self, x: int) -> None:
         """Strategy generates only positive integers for PositiveInt."""
-        from hive.testing import strategy_for_type
-        from hive.types import PositiveInt
 
         # Replace the ... with actual strategy
         pass
@@ -20,6 +17,7 @@ class TestStrategyForType:
     def test_positive_int_strategy_generates_valid_values(self) -> None:
         """PositiveInt strategy only generates x > 0."""
         from hypothesis import given, settings
+
         from hive.testing import strategy_for_type
         from hive.types import PositiveInt
 
@@ -35,6 +33,7 @@ class TestStrategyForType:
     def test_port_strategy_generates_valid_values(self) -> None:
         """Port strategy generates 1-65535."""
         from hypothesis import given, settings
+
         from hive.testing import strategy_for_type
         from hive.types import Port
 
@@ -50,6 +49,7 @@ class TestStrategyForType:
     def test_percentage_strategy_generates_valid_values(self) -> None:
         """Percentage strategy generates 0.0-100.0."""
         from hypothesis import given, settings
+
         from hive.testing import strategy_for_type
         from hive.types import Percentage
 
@@ -65,6 +65,7 @@ class TestStrategyForType:
     def test_plain_int_strategy(self) -> None:
         """Plain int generates any integer."""
         from hypothesis import given, settings
+
         from hive.testing import strategy_for_type
 
         strategy = strategy_for_type(int)

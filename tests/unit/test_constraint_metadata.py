@@ -1,6 +1,5 @@
 """Test ConstraintMetadata dataclass in core types."""
 
-import pytest
 
 
 class TestConstraintMetadata:
@@ -24,7 +23,8 @@ class TestConstraintMetadata:
         """ConstraintMetadata accepts all constraint fields."""
         from hive.core.types import ConstraintMetadata
 
-        validator = lambda x: x > 0
+        def validator(x: int) -> bool:
+            return x > 0
 
         meta = ConstraintMetadata(
             description="positive integer",
@@ -47,7 +47,7 @@ class TestParameterInfoWithConstraints:
 
     def test_parameter_info_has_constraints_field(self) -> None:
         """ParameterInfo has optional constraints field."""
-        from hive.core.types import ParameterInfo, ParameterKind, ConstraintMetadata
+        from hive.core.types import ParameterInfo, ParameterKind
 
         param = ParameterInfo(
             name="age",
@@ -61,7 +61,7 @@ class TestParameterInfoWithConstraints:
 
     def test_parameter_info_accepts_constraints(self) -> None:
         """ParameterInfo accepts ConstraintMetadata."""
-        from hive.core.types import ParameterInfo, ParameterKind, ConstraintMetadata
+        from hive.core.types import ConstraintMetadata, ParameterInfo, ParameterKind
 
         meta = ConstraintMetadata(
             description="positive integer",

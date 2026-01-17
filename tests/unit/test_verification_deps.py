@@ -1,13 +1,10 @@
 """Test that verification dependencies are available."""
 
-import pytest
 
 
 def test_beartype_importable() -> None:
     """Verify beartype is installed and importable."""
     from beartype import beartype
-    from beartype.vale import Is
-    from beartype.roar import BeartypeCallHintParamViolation
 
     assert callable(beartype)
 
@@ -24,7 +21,8 @@ def test_deal_importable() -> None:
 
 def test_hypothesis_importable() -> None:
     """Verify hypothesis is installed and importable."""
-    from hypothesis import given, strategies as st
+    from hypothesis import given
+    from hypothesis import strategies as st
 
     assert callable(given)
     assert hasattr(st, 'integers')

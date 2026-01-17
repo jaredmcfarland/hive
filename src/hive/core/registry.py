@@ -72,11 +72,11 @@ class ApplicationRegistry:
             )
 
     @deal.pre(
-        lambda self, registration: registration.name and len(registration.name) > 0,
+        lambda _self, registration: registration.name and len(registration.name) > 0,
         message="Command name required",
     )
     @deal.pre(
-        lambda self, registration: registration.func is not None,
+        lambda _self, registration: registration.func is not None,
         message="Command function required",
     )
     def register_command(self, registration: CommandRegistration) -> None:

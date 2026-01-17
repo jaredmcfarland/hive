@@ -15,7 +15,7 @@ class TestRegistryContracts:
 
         reg = CommandRegistration(
             name="",  # Empty name
-            func=lambda ctx: None,
+            func=lambda ctx: None,  # noqa: ARG005
             parameters=[],
             return_type=None,
             docstring=None,
@@ -24,7 +24,7 @@ class TestRegistryContracts:
             hidden=False,
         )
 
-        with pytest.raises(Exception):  # deal.PreContractError
+        with pytest.raises(Exception):  # noqa: B017 - deal.PreContractError
             registry.register_command(reg)
 
     def test_cannot_register_none_func(self) -> None:
@@ -45,7 +45,7 @@ class TestRegistryContracts:
             hidden=False,
         )
 
-        with pytest.raises(Exception):  # deal.PreContractError
+        with pytest.raises(Exception):  # noqa: B017 - deal.PreContractError
             registry.register_command(reg)
 
     def test_cannot_register_duplicate_name(self) -> None:
@@ -85,5 +85,5 @@ class TestRegistryContracts:
 
         registry.register_command(reg1)
 
-        with pytest.raises(Exception):  # RegistrationError or deal.PreContractError
+        with pytest.raises(Exception):  # noqa: B017 - RegistrationError or deal.PreContractError
             registry.register_command(reg2)

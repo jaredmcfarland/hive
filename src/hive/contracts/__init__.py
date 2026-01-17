@@ -17,6 +17,6 @@ Example:
         ...
 """
 
-from hive.contracts.decorators import requires, ensures, invariant
+from hive.contracts.decorators import ensures, invariant, requires
 
 __all__ = ["requires", "ensures", "invariant"]

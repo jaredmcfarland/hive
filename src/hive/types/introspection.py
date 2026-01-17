@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import inspect
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Annotated, Any, Callable, get_args, get_origin
+from typing import Annotated, Any, get_args, get_origin
 
 
 @dataclass

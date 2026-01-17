@@ -15,38 +15,38 @@ Example:
         ...
 """
 
-from hive.types.primitives import (
-    PositiveInt,
-    NonNegativeInt,
-    NegativeInt,
-    PositiveFloat,
-    NonNegativeFloat,
-    UnitInterval,
-    Percentage,
-    Probability,
-)
-from hive.types.strings import (
-    NonEmptyStr,
-    TrimmedStr,
-    LowercaseStr,
-    UppercaseStr,
-    Identifier,
-    Slug,
-    Email,
-    Url,
-    FilePath,
-    DirectoryPath,
-)
 from hive.types.numeric import (
-    Port,
-    HttpStatusCode,
-    UnixTimestamp,
-    Year,
-    Month,
     Day,
     Hour,
+    HttpStatusCode,
     Minute,
+    Month,
+    Port,
     Second,
+    UnixTimestamp,
+    Year,
+)
+from hive.types.primitives import (
+    NegativeInt,
+    NonNegativeFloat,
+    NonNegativeInt,
+    Percentage,
+    PositiveFloat,
+    PositiveInt,
+    Probability,
+    UnitInterval,
+)
+from hive.types.strings import (
+    DirectoryPath,
+    Email,
+    FilePath,
+    Identifier,
+    LowercaseStr,
+    NonEmptyStr,
+    Slug,
+    TrimmedStr,
+    UppercaseStr,
+    Url,
 )
 
 __all__ = [

@@ -1,6 +1,5 @@
 """Test that decorators extract constraints from refinement types."""
 
-import pytest
 
 
 class TestCommandConstraintExtraction:

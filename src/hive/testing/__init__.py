@@ -18,7 +18,7 @@ Example:
             assert result is not None
 """
 
-from hive.testing.strategies import strategy_for_type
 from hive.testing.mocks import MockExecutionContext
+from hive.testing.strategies import strategy_for_type
 
 __all__ = ["strategy_for_type", "MockExecutionContext"]

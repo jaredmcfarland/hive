@@ -1,6 +1,5 @@
 """Test CLI validation error formatting with refinement types."""
 
-import pytest
 from typer.testing import CliRunner
 
 
@@ -14,8 +13,8 @@ class TestCLIValidation:
     def test_positive_int_shows_helpful_error(self) -> None:
         """CLI shows helpful error for invalid PositiveInt."""
         from hive import App, command
-        from hive.types import PositiveInt
         from hive.generators.cli import CLIGenerator
+        from hive.types import PositiveInt
 
         app = App(name="test-app")
 
@@ -37,8 +36,8 @@ class TestCLIValidation:
     def test_port_shows_range_error(self) -> None:
         """CLI shows range error for invalid Port."""
         from hive import App, command
-        from hive.types import Port
         from hive.generators.cli import CLIGenerator
+        from hive.types import Port
 
         app = App(name="test-app")
 
@@ -60,8 +59,8 @@ class TestCLIValidation:
     def test_valid_value_passes(self) -> None:
         """CLI accepts valid refinement type values."""
         from hive import App, command
-        from hive.types import PositiveInt
         from hive.generators.cli import CLIGenerator
+        from hive.types import PositiveInt
 
         app = App(name="test-app")
 

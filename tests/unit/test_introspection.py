@@ -1,9 +1,6 @@
 """Test constraint metadata extraction from refinement types."""
 
-import pytest
-from typing import Annotated
 
-from beartype.vale import Is
 
 
 class TestExtractConstraints:
@@ -19,8 +16,8 @@ class TestExtractConstraints:
 
     def test_extracts_base_type_from_annotated(self) -> None:
         """extract_constraints extracts base type from Annotated."""
-        from hive.types.introspection import extract_constraints
         from hive.types import PositiveInt
+        from hive.types.introspection import extract_constraints
 
         info = extract_constraints(PositiveInt)
 
@@ -29,8 +26,8 @@ class TestExtractConstraints:
 
     def test_extracts_min_value_from_positive_int(self) -> None:
         """extract_constraints extracts min_value from PositiveInt."""
-        from hive.types.introspection import extract_constraints
         from hive.types import PositiveInt
+        from hive.types.introspection import extract_constraints
 
         info = extract_constraints(PositiveInt)
 
@@ -40,8 +37,8 @@ class TestExtractConstraints:
 
     def test_extracts_bounds_from_port(self) -> None:
         """extract_constraints extracts min/max from Port type."""
-        from hive.types.introspection import extract_constraints
         from hive.types import Port
+        from hive.types.introspection import extract_constraints
 
         info = extract_constraints(Port)
 
@@ -52,8 +49,8 @@ class TestExtractConstraints:
 
     def test_extracts_bounds_from_percentage(self) -> None:
         """extract_constraints extracts bounds from Percentage."""
-        from hive.types.introspection import extract_constraints
         from hive.types import Percentage
+        from hive.types.introspection import extract_constraints
 
         info = extract_constraints(Percentage)
 
@@ -64,8 +61,8 @@ class TestExtractConstraints:
 
     def test_extracts_validator_function(self) -> None:
         """extract_constraints extracts the validator callable."""
-        from hive.types.introspection import extract_constraints
         from hive.types import PositiveInt
+        from hive.types.introspection import extract_constraints
 
         info = extract_constraints(PositiveInt)
 

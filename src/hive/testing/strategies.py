@@ -80,9 +80,8 @@ def _strategy_for_annotated(type_hint: Any) -> SearchStrategy[Any]:
                     int_max = int(max_val) if max_val is not None else None
 
                     # If validator exists, check if 0 is excluded
-                    if constraints.validator and int_min == 0:
-                        if not constraints.validator(0):
-                            int_min = 1
+                    if constraints.validator and int_min == 0 and not constraints.validator(0):
+                        int_min = 1
 
                     base_strategy = st.integers(min_value=int_min, max_value=int_max)
                 else:
@@ -103,18 +102,16 @@ def _strategy_for_annotated(type_hint: Any) -> SearchStrategy[Any]:
                     base_strategy = st.text().filter(constraints.validator)
 
         # Apply length constraints
-        if constraints.min_length is not None or constraints.max_length is not None:
-            if base_type is str:
-                base_strategy = st.text(
-                    min_size=constraints.min_length or 0,
-                    max_size=constraints.max_length or 100,
-                )
+        if (constraints.min_length is not None or constraints.max_length is not None) and base_type is str:
+            base_strategy = st.text(
+                min_size=constraints.min_length or 0,
+                max_size=constraints.max_length or 100,
+            )
 
         # Apply validator as filter (fallback for complex constraints)
-        if constraints.validator and base_type not in (int, float):
-            # Already handled numeric bounds above
-            if base_type is str and not constraints.pattern:
-                base_strategy = base_strategy.filter(constraints.validator)
+        # Already handled numeric bounds above
+        if constraints.validator and base_type not in (int, float) and base_type is str and not constraints.pattern:
+            base_strategy = base_strategy.filter(constraints.validator)
 
     return base_strategy
 
