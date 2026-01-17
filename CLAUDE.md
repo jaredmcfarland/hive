@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Hive is a Python framework for building terminal-agent-native applications. It generates CLI (Typer), TUI (Textual), and Python API interfaces from a single decorated codebase. Optional MCP server (FastMCP) and REST API (FastAPI) generation.
 
-**Status**: Greenfield project - specification complete, implementation not yet started.
+**Status**: Active development - verification stack complete, core framework in progress.
 
 ## Development Commands
 
@@ -53,13 +53,34 @@ hive spec export          # Export specification as JSON Schema
 | MCP | FastMCP | Optional, decorator-based tool generation |
 | REST | FastAPI | Optional, OpenAPI docs at `/docs` |
 
-## Project Structure (Target)
+## Project Structure
 
 ```
 src/hive/
-├── core/           # Specification parsing and registry
-├── generators/     # CLI, TUI, and artifact generators
-└── runtime/        # Execution context and database layer
+├── __init__.py         # Public API exports
+├── app.py              # App class definition
+├── errors.py           # Exception hierarchy
+├── core/               # Specification parsing and registry
+│   ├── decorators.py   # @command, @query, @entity decorators
+│   ├── registry.py     # Command/query registration
+│   └── types.py        # Core type definitions
+├── types/              # Refinement types (beartype-based)
+│   ├── numeric.py      # PositiveInt, Percentage, Port, etc.
+│   ├── strings.py      # NonEmptyStr, Email, Slug, etc.
+│   ├── primitives.py   # Base type utilities
+│   └── introspection.py # extract_constraints() for CLI/Schema
+├── contracts/          # Design-by-contract (deal-based)
+│   └── decorators.py   # @requires, @ensures, @invariant
+├── testing/            # Test utilities (hypothesis-based)
+│   ├── strategies.py   # strategy_for_type() auto-generation
+│   └── mocks.py        # MockExecutionContext
+├── generators/         # Interface generators
+│   └── cli.py          # Typer CLI generation
+└── runtime/            # Execution context and services
+    ├── context.py      # ExecutionContext implementation
+    ├── config.py       # Pydantic settings
+    ├── database.py     # SQLModel async session
+    └── output.py       # Format-aware output (--json support)
 ```
 
 ## Key Design Patterns
@@ -84,10 +105,11 @@ Commands receive `ctx` with:
 
 ## Implementation Phases
 
-1. **Core Framework**: Decorators, registry, execution context, CLI generation
-2. **TUI and Services**: Textual app, service layer, standard widgets
-3. **Specification and Distribution**: JSON Schema export, MCP/REST generation, project tooling
-4. **Documentation and Polish**: Doc generation, testing utilities, examples
+1. **Core Framework**: Decorators, registry, execution context, CLI generation *(in progress)*
+2. **Verification Stack**: Refinement types, contracts, testing utilities *(complete)*
+3. **TUI and Services**: Textual app, service layer, standard widgets
+4. **Specification and Distribution**: JSON Schema export, MCP/REST generation, project tooling
+5. **Documentation and Polish**: Doc generation, examples
 
 ## Active Technologies
 - Python 3.11+ (required for modern type hints including `X | None` syntax) + Typer, Rich, SQLModel, Pydantic, Pydantic-Settings (001-core-framework)
@@ -177,5 +199,9 @@ async def test_my_command():
 ```
 
 ## Recent Changes
-- 001-core-framework: Added Python 3.11+ (required for modern type hints including `X | None` syntax) + Typer, Rich, SQLModel, Pydantic, Pydantic-Settings
-- verification-stack: Added beartype, deal, hypothesis for runtime validation and testing
+- verification-stack: Complete verification pyramid implementation
+  - `hive.types` - 20+ refinement types with beartype validation
+  - `hive.contracts` - @requires/@ensures/@invariant decorators wrapping deal
+  - `hive.testing` - strategy_for_type() and MockExecutionContext
+  - User-friendly CLI error messages for validation failures
+- 001-core-framework: Added Python 3.11+ + Typer, Rich, SQLModel, Pydantic, Pydantic-Settings

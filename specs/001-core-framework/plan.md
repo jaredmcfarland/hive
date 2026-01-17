@@ -1,18 +1,19 @@
 # Implementation Plan: Core Framework
 
-**Branch**: `001-core-framework` | **Date**: 2026-01-11 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-core-framework` | **Created**: 2026-01-11 | **Updated**: 2026-01-17 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-core-framework/spec.md`
+**Status**: Complete
 
 ## Summary
 
-Implement the foundational Hive framework components: decorator system (`@command`, `@query`, `@entity`, `@screen`), central application registry, execution context with database/config/output services, and CLI generator using Typer. This establishes the core "define once, generate everywhere" pattern that all future features build upon.
+Implement the foundational Hive framework components: decorator system (`@command`, `@query`, `@entity`, `@screen`), central application registry, execution context with database/config/output services, CLI generator using Typer, and verification stack (refinement types, contracts, testing utilities). This establishes the core "define once, generate everywhere" pattern that all future features build upon.
 
 ## Technical Context
 
 **Language/Version**: Python 3.11+ (required for modern type hints including `X | None` syntax)
-**Primary Dependencies**: Typer, Rich, SQLModel, Pydantic, Pydantic-Settings
+**Primary Dependencies**: Typer, Rich, SQLModel, Pydantic, Pydantic-Settings, beartype>=0.18.0, deal>=4.24.0
 **Storage**: SQLite via SQLModel/SQLAlchemy (async support via aiosqlite)
-**Testing**: pytest, pytest-asyncio
+**Testing**: pytest, pytest-asyncio, hypothesis>=6.100.0
 **Target Platform**: Cross-platform (macOS, Linux, Windows)
 **Project Type**: Single Python package (library + CLI)
 **Performance Goals**: Import time <500ms, decorator registration <1ms per item
@@ -89,23 +90,36 @@ specs/001-core-framework/
 
 ```text
 src/hive/
-├── __init__.py          # Public API exports (App, decorators)
+├── __init__.py          # Public API exports (App, decorators, types)
 ├── app.py               # App class definition
+├── errors.py            # CommandError, ConfigurationError, etc.
 ├── core/
 │   ├── __init__.py
 │   ├── decorators.py    # @command, @query, @entity, @screen
 │   ├── registry.py      # ApplicationRegistry class
 │   └── types.py         # Registration dataclasses, type definitions
+├── types/               # Refinement types (beartype-based)
+│   ├── __init__.py      # Public exports
+│   ├── numeric.py       # PositiveInt, Percentage, Port, etc.
+│   ├── strings.py       # NonEmptyStr, Email, Slug, etc.
+│   ├── primitives.py    # Base type utilities
+│   └── introspection.py # extract_constraints() for CLI/Schema
+├── contracts/           # Design-by-contract (deal-based)
+│   ├── __init__.py
+│   └── decorators.py    # @requires, @ensures, @invariant
+├── testing/             # Test utilities (hypothesis-based)
+│   ├── __init__.py
+│   ├── strategies.py    # strategy_for_type() auto-generation
+│   └── mocks.py         # MockExecutionContext
 ├── runtime/
 │   ├── __init__.py
 │   ├── context.py       # ExecutionContext class
 │   ├── database.py      # Database session management
 │   ├── config.py        # Pydantic Settings integration
 │   └── output.py        # OutputFormatter (JSON, table, etc.)
-├── generators/
-│   ├── __init__.py
-│   └── cli.py           # Typer CLI generator
-└── errors.py            # CommandError, ConfigurationError, etc.
+└── generators/
+    ├── __init__.py
+    └── cli.py           # Typer CLI generator
 
 tests/
 ├── conftest.py          # Shared fixtures
@@ -116,9 +130,14 @@ tests/
 ├── integration/
 │   ├── test_context_lifecycle.py
 │   └── test_end_to_end.py
-└── unit/
-    ├── test_output_formatter.py
-    └── test_config_loading.py
+├── unit/
+│   ├── test_output_formatter.py
+│   ├── test_config_loading.py
+│   ├── test_refinement_types.py
+│   ├── test_contracts.py
+│   └── test_strategies.py
+└── property/
+    └── test_type_strategies.py
 ```
 
 **Structure Decision**: Single project following constitution's code organization. The `src/hive/` layout matches the constitution's prescribed structure with `core/`, `generators/`, and `runtime/` directories.

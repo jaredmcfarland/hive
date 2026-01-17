@@ -2,6 +2,7 @@
 
 **Input**: Design documents from `/specs/001-core-framework/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
+**Status**: Complete (all phases finished)
 
 **Tests**: Required per Constitution (Principle III: Test-First Development)
 
@@ -214,6 +215,90 @@
 
 ---
 
+## Phase 9: User Story 6 - Refinement Types (Priority: P2)
+
+**Goal**: Provide refinement types that validate at runtime with user-friendly error messages.
+
+**Independent Test**: Use PositiveInt in a command, pass invalid value, verify clear error message.
+
+### Tests for User Story 6
+
+- [X] T089 [P] [US6] Unit test for numeric refinement types (PositiveInt, Port, etc.) in tests/unit/test_refinement_types.py
+- [X] T090 [P] [US6] Unit test for string refinement types (Email, Slug, etc.) in tests/unit/test_refinement_types.py
+- [X] T091 [P] [US6] Unit test for constraint extraction in tests/unit/test_refinement_types.py
+- [X] T092 [P] [US6] Integration test for CLI error messages in tests/integration/test_cli_validation.py
+
+### Implementation for User Story 6
+
+- [X] T093 [P] [US6] Create src/hive/types/__init__.py with public exports
+- [X] T094 [P] [US6] Create src/hive/types/primitives.py with base utilities
+- [X] T095 [US6] Create numeric refinement types in src/hive/types/numeric.py
+- [X] T096 [US6] Create string refinement types in src/hive/types/strings.py
+- [X] T097 [US6] Implement extract_constraints() in src/hive/types/introspection.py
+- [X] T098 [US6] Implement beartype error translation for CLI in src/hive/generators/cli.py
+- [X] T099 [US6] Export refinement types from src/hive/__init__.py
+
+**Checkpoint**: User Story 6 complete - refinement types with user-friendly CLI validation
+
+---
+
+## Phase 10: User Story 7 - Contract Decorators (Priority: P3)
+
+**Goal**: Provide design-by-contract decorators for preconditions and postconditions.
+
+**Independent Test**: Apply @requires decorator, violate precondition, verify CommandError with message.
+
+### Tests for User Story 7
+
+- [X] T100 [P] [US7] Unit test for @requires decorator in tests/unit/test_contracts.py
+- [X] T101 [P] [US7] Unit test for @ensures decorator in tests/unit/test_contracts.py
+- [X] T102 [P] [US7] Unit test for @invariant decorator in tests/unit/test_contracts.py
+
+### Implementation for User Story 7
+
+- [X] T103 [P] [US7] Create src/hive/contracts/__init__.py with public exports
+- [X] T104 [US7] Implement @requires decorator in src/hive/contracts/decorators.py
+- [X] T105 [US7] Implement @ensures decorator in src/hive/contracts/decorators.py
+- [X] T106 [US7] Implement @invariant decorator in src/hive/contracts/decorators.py
+- [X] T107 [US7] Export contract decorators from src/hive/__init__.py
+
+**Checkpoint**: User Story 7 complete - contract decorators raise CommandError on violation
+
+---
+
+## Phase 11: User Story 8 - Testing Utilities (Priority: P3)
+
+**Goal**: Provide Hypothesis strategies and mock context for property-based testing.
+
+**Independent Test**: Generate strategy for PositiveInt, verify all values positive.
+
+### Tests for User Story 8
+
+- [X] T108 [P] [US8] Unit test for strategy_for_type() in tests/unit/test_strategies.py
+- [X] T109 [P] [US8] Unit test for MockExecutionContext in tests/unit/test_strategies.py
+- [X] T110 [P] [US8] Property test for refinement type strategies in tests/property/test_type_strategies.py
+
+### Implementation for User Story 8
+
+- [X] T111 [P] [US8] Create src/hive/testing/__init__.py with public exports
+- [X] T112 [US8] Implement strategy_for_type() in src/hive/testing/strategies.py
+- [X] T113 [US8] Implement MockExecutionContext in src/hive/testing/mocks.py
+- [X] T114 [US8] Export testing utilities from src/hive/__init__.py
+
+**Checkpoint**: User Story 8 complete - Hypothesis strategies auto-generate from types
+
+---
+
+## Phase 12: Verification Stack Polish
+
+**Purpose**: Final verification and documentation for verification stack
+
+- [X] T115 Update pyproject.toml with beartype, deal, hypothesis dependencies
+- [X] T116 Run full test suite including property tests
+- [X] T117 Update CLAUDE.md with verification stack documentation
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -226,15 +311,21 @@
 - **User Story 4 (Phase 6)**: Depends on US1 + US3 (needs decorators and context)
 - **User Story 5 (Phase 7)**: Depends on US1 (uses same decorator pattern)
 - **Polish (Phase 8)**: Depends on all user stories being complete
+- **User Story 6 (Phase 9)**: Depends on US4 (refinement types used in CLI)
+- **User Story 7 (Phase 10)**: Depends on Foundational (uses error hierarchy)
+- **User Story 8 (Phase 11)**: Depends on US6 (strategies for refinement types)
+- **Verification Polish (Phase 12)**: Depends on US6, US7, US8 complete
 
 ### User Story Dependencies
 
 ```
-Setup → Foundational → US1 (P1) → US4 (P3)
-                    ↘        ↗
-                      US3 (P2)
-                    ↘
-                      US2 (P2) → US5 (P3)
+Setup → Foundational → US1 (P1) → US4 (P3) → US6 (P2) → US8 (P3)
+                    ↘        ↗              ↗
+                      US3 (P2)              │
+                    ↘                       │
+                      US2 (P2) → US5 (P3)   │
+                    ↘                       │
+                      └─────── US7 (P3) ────┘
 ```
 
 - **US1**: Foundation only - MVP candidate
@@ -242,6 +333,9 @@ Setup → Foundational → US1 (P1) → US4 (P3)
 - **US3**: Foundation only - can start after US1 or in parallel
 - **US4**: Requires US1 (commands to generate) + US3 (context for execution)
 - **US5**: Requires US1 (decorator pattern) - uses same registry pattern
+- **US6**: Requires US4 (CLI integration for error messages)
+- **US7**: Requires Foundational (error hierarchy for CommandError)
+- **US8**: Requires US6 (strategies generate from refinement types)
 
 ### Within Each User Story
 
