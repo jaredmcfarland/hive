@@ -1,7 +1,8 @@
 # Public API Contract: Core Framework
 
 **Feature**: 001-core-framework
-**Date**: 2026-01-11
+**Created**: 2026-01-11
+**Updated**: 2026-01-17
 
 ## Overview
 
@@ -30,6 +31,49 @@ from hive import (
     CommandError,
     ConfigurationError,
     HiveError,
+)
+
+# Refinement types from hive.types
+from hive.types import (
+    # Numeric types
+    PositiveInt,
+    NonNegativeInt,
+    NegativeInt,
+    PositiveFloat,
+    NonNegativeFloat,
+    UnitInterval,
+    Percentage,
+    Probability,
+    Port,
+    HttpStatusCode,
+    Year, Month, Day,
+    Hour, Minute, Second,
+
+    # String types
+    NonEmptyStr,
+    TrimmedStr,
+    Identifier,
+    Slug,
+    Email,
+    Url,
+    FilePath,
+
+    # Introspection
+    extract_constraints,
+    TypeConstraints,
+)
+
+# Contract decorators from hive.contracts
+from hive.contracts import (
+    requires,
+    ensures,
+    invariant,
+)
+
+# Testing utilities from hive.testing
+from hive.testing import (
+    strategy_for_type,
+    MockExecutionContext,
 )
 ```
 
@@ -312,3 +356,136 @@ registry.list_commands() -> list[CommandRegistration]
 registry.get_entity(name: str) -> EntityRegistration | None
 registry.list_entities() -> list[EntityRegistration]
 ```
+
+## Refinement Types
+
+Type aliases using `Annotated` with beartype validators for runtime validation.
+
+### Numeric Types
+
+```python
+from hive.types import PositiveInt, Port, Percentage
+
+def my_func(
+    count: PositiveInt,       # int > 0
+    port: Port,               # 1 <= int <= 65535
+    progress: Percentage,     # 0.0 <= float <= 100.0
+) -> None: ...
+```
+
+### String Types
+
+```python
+from hive.types import NonEmptyStr, Email, Slug
+
+def my_func(
+    name: NonEmptyStr,        # len > 0
+    email: Email,             # valid email format
+    slug: Slug,               # lowercase, hyphens only
+) -> None: ...
+```
+
+### Constraint Introspection
+
+```python
+from hive.types import extract_constraints, Port
+
+constraints = extract_constraints(Port)
+# TypeConstraints(
+#     min_value=1,
+#     max_value=65535,
+#     min_length=None,
+#     max_length=None,
+#     pattern=None,
+#     description="integer between 1 and 65535"
+# )
+```
+
+## Contract Decorators
+
+Design-by-contract decorators wrapping the deal library.
+
+### @requires (Precondition)
+
+```python
+from hive.contracts import requires
+
+@command(app)
+@requires(lambda ctx, user_id: user_id > 0, "User ID must be positive")
+async def get_user(ctx, user_id: int) -> User:
+    ...
+```
+
+**On violation**: Raises `CommandError` with the specified message.
+
+### @ensures (Postcondition)
+
+```python
+from hive.contracts import ensures
+
+@command(app)
+@ensures(lambda ctx, user_id, result: result.id == user_id, "Must return correct user")
+async def get_user(ctx, user_id: int) -> User:
+    ...
+```
+
+**On violation**: Raises `CommandError` with the specified message.
+
+### @invariant (Class Invariant)
+
+```python
+from hive.contracts import invariant
+
+@invariant(lambda self: self.balance >= 0, "Balance cannot be negative")
+class Account:
+    balance: float
+```
+
+**On violation**: Raises `CommandError` when invariant check fails.
+
+## Testing Utilities
+
+Hypothesis integration and mock context for testing.
+
+### strategy_for_type
+
+```python
+from hypothesis import given
+from hive.testing import strategy_for_type
+from hive.types import PositiveInt, Email
+
+@given(
+    count=strategy_for_type(PositiveInt),
+    email=strategy_for_type(Email),
+)
+def test_my_function(count, email):
+    assert count > 0
+    assert "@" in email
+```
+
+**Returns**: A Hypothesis strategy that generates only values satisfying the type constraints.
+
+### MockExecutionContext
+
+```python
+from hive.testing import MockExecutionContext
+
+async def test_my_command():
+    async with MockExecutionContext() as ctx:
+        result = await my_command(ctx, arg="value")
+
+        # Verify database interactions
+        assert ctx.db.add.called
+        assert ctx.db.commit.called
+
+        # Verify output
+        assert ctx.output.result.called
+```
+
+**Properties**:
+- `ctx.db` - MagicMock for database session
+- `ctx.config` - Test AppSettings instance
+- `ctx.output` - MagicMock for output formatter
+- `ctx.command_name` - "test_command"
+- `ctx.output_format` - OutputFormat.JSON
+- `ctx.interactive` - False

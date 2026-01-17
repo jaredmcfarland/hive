@@ -6,9 +6,11 @@ Generates a Typer application from the registered commands and queries.
 import asyncio
 import inspect
 from collections.abc import Callable
-from typing import Any, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 
 import typer
+from beartype import beartype
+from beartype.roar import BeartypeCallHintParamViolation
 
 from hive.core.registry import ApplicationRegistry
 from hive.core.types import CommandRegistration, ParameterInfo, QueryRegistration
@@ -169,13 +171,22 @@ class CLIGenerator:
         return wrapper
 
     def _get_base_type(self, type_hint: Any) -> type:
-        """Extract the base type from a type hint, handling Optional."""
+        """Extract the base type from a type hint, handling Optional and Annotated."""
         import types
 
         if type_hint is None or type_hint is type(None):
             return str
 
         origin = get_origin(type_hint)
+
+        # Handle Annotated types (e.g., Annotated[int, Is[...]])
+        # This is crucial for refinement types like PositiveInt, Port, etc.
+        if origin is Annotated:
+            args = get_args(type_hint)
+            if args:
+                # First arg is the actual type, rest are metadata
+                return self._get_base_type(args[0])
+            return str
 
         # Handle Union types (including Optional which is Union[X, None])
         # Python 3.10+ uses types.UnionType for X | Y syntax
@@ -206,19 +217,47 @@ class CLIGenerator:
         command_name: str,
         kwargs: dict[str, Any],
     ) -> Any:
-        """Execute an async command with context."""
+        """Execute an async command with context and beartype validation."""
         async with ExecutionContext(
             settings=settings,
             output_format=output_format,
             command_name=command_name,
         ) as ctx:
-            result = await func(ctx, **kwargs)
+            try:
+                # Apply beartype validation for refinement types
+                validated_func = beartype(func)
+                result = await validated_func(ctx, **kwargs)
+            except BeartypeCallHintParamViolation as e:
+                # Format validation error for CLI
+                error_msg = self._format_validation_error(e, kwargs)
+                raise CommandError(error_msg, exit_code=1) from None
 
             # Output the result
             if result is not None:
                 ctx.output.result(result)
 
             return result
+
+    def _format_validation_error(
+        self, error: BeartypeCallHintParamViolation, kwargs: dict[str, Any]
+    ) -> str:
+        """Format beartype validation error for CLI output."""
+        msg = str(error)
+
+        # Try to extract parameter name from error message
+        # BeartypeCallHintParamViolation typically includes the parameter name
+        # Make it more user-friendly
+        import re
+
+        # Look for parameter name in error message
+        param_match = re.search(r"parameter (['\"]?)(\w+)\1", msg, re.IGNORECASE)
+        if param_match:
+            param_name = param_match.group(2)
+            value = kwargs.get(param_name, "unknown")
+            return f"Invalid value for '{param_name}': {value!r} does not satisfy type constraints"
+
+        # Fallback to a simpler message
+        return f"Validation error: {msg}"
 
     def _to_cli_name(self, name: str) -> str:
         """Convert a Python identifier to a CLI-friendly name."""

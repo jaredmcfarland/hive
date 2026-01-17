@@ -3,6 +3,7 @@
 from types import TracebackType
 from typing import Self
 
+import deal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from hive.runtime.config import AppSettings
@@ -53,7 +54,13 @@ class ExecutionContext:
         self._session: AsyncSession | None = None
         self._output = OutputFormatter(format=output_format, quiet=quiet)
 
+        # State tracking for invariants
+        self._closed = False
+        self._committed = False
+        self._rolled_back = False
+
     @property
+    @deal.pre(lambda self: not self._closed, message="Context is closed")
     def db(self) -> AsyncSession:
         """Database session for operations."""
         if self._session is None:
@@ -87,6 +94,22 @@ class ExecutionContext:
 
         return sys.stdin.isatty() and sys.stdout.isatty()
 
+    @deal.pre(lambda self: not self._closed, message="Context is closed")
+    @deal.pre(lambda self: not self._committed, message="Already committed")
+    async def commit(self) -> None:
+        """Commit the current transaction."""
+        if self._session:
+            await self._session.commit()
+        self._committed = True
+
+    @deal.pre(lambda self: not self._closed, message="Context is closed")
+    @deal.pre(lambda self: not self._rolled_back, message="Already rolled back")
+    async def rollback(self) -> None:
+        """Rollback the current transaction."""
+        if self._session:
+            await self._session.rollback()
+        self._rolled_back = True
+
     async def __aenter__(self) -> Self:
         """Enter the context, creating a database session."""
         self._session = self._session_factory()
@@ -104,17 +127,21 @@ class ExecutionContext:
             False to re-raise any exception.
         """
         if self._session is None:
+            self._closed = True
             return False
 
         try:
-            if exc_type is None:
+            if exc_type is None and not self._committed and not self._rolled_back:
                 # Success - commit the transaction
                 await self._session.commit()
-            else:
+                self._committed = True
+            elif exc_type is not None and not self._rolled_back:
                 # Exception occurred - rollback
                 await self._session.rollback()
+                self._rolled_back = True
         finally:
             await self._session.close()
             self._session = None
+            self._closed = True
 
         return False  # Re-raise any exception

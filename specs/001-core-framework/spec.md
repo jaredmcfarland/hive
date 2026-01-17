@@ -2,8 +2,9 @@
 
 **Feature Branch**: `001-core-framework`
 **Created**: 2026-01-11
-**Status**: Draft
-**Input**: Phase 1: Core Framework - Decorator system, registry, execution context, and CLI generation
+**Updated**: 2026-01-17
+**Status**: Complete
+**Input**: Phase 1: Core Framework - Decorator system, registry, execution context, CLI generation, and verification stack
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -105,6 +106,62 @@ As a framework developer, I want to define terminal UI screens with a `@screen` 
 
 ---
 
+### User Story 6 - Validate Inputs with Refinement Types (Priority: P2)
+
+As a framework developer, I want to annotate command parameters with refinement types so that invalid inputs are rejected with user-friendly error messages before my command logic executes.
+
+**Why this priority**: Runtime validation catches errors early and provides clear feedback. Refinement types integrate naturally with the decorator system and improve user experience.
+
+**Independent Test**: Define a command with PositiveInt parameter, invoke with negative value, verify clear error message is shown.
+
+**Acceptance Scenarios**:
+
+1. **Given** a command parameter annotated with `PositiveInt`, **When** the user provides 0 or negative value, **Then** the CLI displays a user-friendly error message explaining the constraint.
+
+2. **Given** a command parameter annotated with `Email`, **When** the user provides an invalid email format, **Then** validation fails before the command executes.
+
+3. **Given** a command with multiple refinement type parameters, **When** all parameters are valid, **Then** the command executes normally with typed values.
+
+4. **Given** a refinement type like `Port`, **When** I inspect its constraints, **Then** I can extract min/max values for CLI help text or JSON Schema generation.
+
+---
+
+### User Story 7 - Specify Preconditions and Postconditions (Priority: P3)
+
+As a framework developer, I want to specify preconditions and postconditions on my commands using decorators so that business logic constraints are validated automatically.
+
+**Why this priority**: Design by contract catches logic errors and documents expected behavior. This builds on the decorator pattern established in P1.
+
+**Independent Test**: Define a command with `@requires` decorator, invoke with invalid state, verify precondition error is raised.
+
+**Acceptance Scenarios**:
+
+1. **Given** a command decorated with `@requires(lambda ctx, id: id > 0, "ID must be positive")`, **When** the precondition fails, **Then** a `CommandError` is raised with the specified message.
+
+2. **Given** a command decorated with `@ensures(lambda ctx, id, result: result.id == id)`, **When** the postcondition fails, **Then** an error is raised indicating the contract violation.
+
+3. **Given** an entity decorated with `@invariant`, **When** an instance violates the invariant, **Then** validation fails with a descriptive message.
+
+---
+
+### User Story 8 - Property-Based Testing with Auto-Generated Strategies (Priority: P3)
+
+As a framework developer, I want to generate Hypothesis testing strategies from my refinement types so that I can easily write property-based tests for my commands.
+
+**Why this priority**: Automated testing strategies reduce test writing burden and catch edge cases. This extends the refinement type system.
+
+**Independent Test**: Generate a strategy for PositiveInt, verify all generated values satisfy the constraint.
+
+**Acceptance Scenarios**:
+
+1. **Given** a refinement type like `PositiveInt`, **When** I call `strategy_for_type(PositiveInt)`, **Then** I receive a Hypothesis strategy that generates only positive integers.
+
+2. **Given** a command function, **When** I use `MockExecutionContext`, **Then** I can test the command in isolation without database or external dependencies.
+
+3. **Given** a constrained type like `Port`, **When** I use the generated strategy in a test, **Then** all generated values are between 1 and 65535.
+
+---
+
 ### Edge Cases
 
 - What happens when two commands have the same name? System MUST reject duplicate registrations with a clear error message.
@@ -112,6 +169,9 @@ As a framework developer, I want to define terminal UI screens with a `@screen` 
 - How does the system handle commands with no return type annotation? System MUST accept them but issue a warning; output formatting may be limited.
 - What happens when configuration is missing required values? System MUST fail fast with a clear error indicating which values are missing.
 - How does the system handle database connection failures? Commands MUST receive a clear error before execution; partial state changes MUST NOT persist.
+- What happens when a refinement type constraint fails? System MUST display a user-friendly message (not a beartype traceback) with the constraint explanation.
+- How are nested refinement types handled (e.g., `list[PositiveInt]`)? System MUST validate each element against the constraint.
+- What happens when `strategy_for_type` is called on an unknown type? System MUST fall back to Hypothesis's default strategy for the base type.
 
 ## Requirements *(mandatory)*
 
@@ -131,6 +191,13 @@ As a framework developer, I want to define terminal UI screens with a `@screen` 
 - **FR-012**: Framework MUST reject duplicate command/query/entity/screen names with descriptive error messages.
 - **FR-013**: Framework MUST validate decorator usage at decoration time (e.g., @command on functions only).
 - **FR-014**: Context MUST handle database transaction lifecycle (commit on success, rollback on failure).
+- **FR-015**: Framework MUST provide refinement types (`PositiveInt`, `Port`, `Email`, etc.) that validate at runtime via beartype.
+- **FR-016**: Framework MUST convert beartype exceptions to user-friendly CLI error messages with constraint explanations.
+- **FR-017**: Framework MUST provide contract decorators (`@requires`, `@ensures`, `@invariant`) wrapping deal library.
+- **FR-018**: Contract violations MUST raise `CommandError` with the user-specified message.
+- **FR-019**: Framework MUST provide `strategy_for_type()` function to generate Hypothesis strategies from refinement types.
+- **FR-020**: Framework MUST provide `MockExecutionContext` for testing commands without database dependencies.
+- **FR-021**: Framework MUST provide `extract_constraints()` to introspect refinement types for CLI help and JSON Schema generation.
 
 ### Key Entities
 
@@ -153,6 +220,10 @@ As a framework developer, I want to define terminal UI screens with a `@screen` 
 - **SC-006**: Invalid decorator usage produces error messages within 100ms at import time (fail fast).
 - **SC-007**: Registry inspection returns complete metadata for all registered items programmatically.
 - **SC-008**: A developer unfamiliar with the framework can follow documentation to create a working 3-command application within 30 minutes.
+- **SC-009**: Refinement type validation errors display human-readable messages, not library tracebacks.
+- **SC-010**: All 20+ refinement types have corresponding Hypothesis strategies that generate only valid values.
+- **SC-011**: `MockExecutionContext` enables testing commands without any external dependencies.
+- **SC-012**: Constraint extraction from refinement types provides min/max/pattern data for schema generation.
 
 ## Assumptions
 

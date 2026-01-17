@@ -10,6 +10,32 @@ from enum import Enum
 from typing import Any
 
 
+@dataclass
+class ConstraintMetadata:
+    """Constraint information extracted from refinement types."""
+
+    description: str = ""
+    """Human-readable constraint description."""
+
+    min_value: float | None = None
+    """Minimum value for numeric types."""
+
+    max_value: float | None = None
+    """Maximum value for numeric types."""
+
+    pattern: str | None = None
+    """Regex pattern for string types."""
+
+    min_length: int | None = None
+    """Minimum length for string/collection types."""
+
+    max_length: int | None = None
+    """Maximum length for string/collection types."""
+
+    validator: Callable[[Any], bool] | None = field(default=None, repr=False)
+    """Runtime validation function."""
+
+
 class ParameterKind(Enum):
     """Kind of parameter in a function signature."""
 
@@ -33,6 +59,7 @@ class ParameterInfo:
     kind: ParameterKind = ParameterKind.KEYWORD
     help: str | None = None
     short: str | None = None
+    constraints: ConstraintMetadata | None = None
 
 
 @dataclass

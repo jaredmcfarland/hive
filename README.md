@@ -83,7 +83,13 @@ The framework is designed for the emerging category of "terminal-agent-native" s
 
 **Type-Safe Data Layer** — SQLModel integration provides Pydantic validation and SQLAlchemy ORM capabilities. Your models are simultaneously schemas and database tables.
 
-**Specification Export** — Export your application's specification as JSON Schema for documentation, validation, or cross-language consumption.
+**Executable Specifications** — Refinement types like `PositiveInt`, `Port`, and `Email` turn type hints into runtime contracts. Invalid inputs are caught immediately with user-friendly error messages.
+
+**Design by Contract** — Optional `@requires` and `@ensures` decorators specify preconditions and postconditions that are enforced at runtime.
+
+**Property-Based Testing** — Hypothesis integration with automatic strategy generation from refinement types. Test your commands with thousands of valid inputs automatically.
+
+**Specification Export** — Export your application's specification as JSON Schema for documentation, validation, or cross-language consumption. Constraints from refinement types are included.
 
 **Optional Extensions** — Generate MCP servers for non-terminal AI agents or REST APIs via FastAPI when you need to extend beyond the terminal.
 

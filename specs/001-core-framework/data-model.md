@@ -1,7 +1,8 @@
 # Data Model: Core Framework
 
 **Feature**: 001-core-framework
-**Date**: 2026-01-11
+**Created**: 2026-01-11
+**Updated**: 2026-01-17
 
 ## Overview
 
@@ -131,6 +132,81 @@ Runtime container provided to commands.
 | database_url | str | sqlite:///~/.hive/data.db | HIVE_DATABASE_URL |
 | debug | bool | False | HIVE_DEBUG |
 | log_level | str | INFO | HIVE_LOG_LEVEL |
+
+## Verification Types
+
+### Refinement Types
+
+Type aliases using `Annotated` with beartype `Is[]` validators. All defined in `hive.types`.
+
+#### Numeric Types
+
+| Type | Base | Constraint |
+|------|------|------------|
+| PositiveInt | int | > 0 |
+| NonNegativeInt | int | >= 0 |
+| NegativeInt | int | < 0 |
+| PositiveFloat | float | > 0.0 |
+| NonNegativeFloat | float | >= 0.0 |
+| UnitInterval | float | 0.0 <= x <= 1.0 |
+| Percentage | float | 0.0 <= x <= 100.0 |
+| Probability | float | 0.0 <= x <= 1.0 (alias for UnitInterval) |
+| Port | int | 1 <= x <= 65535 |
+| HttpStatusCode | int | 100 <= x <= 599 |
+| Year | int | 1 <= x <= 9999 |
+| Month | int | 1 <= x <= 12 |
+| Day | int | 1 <= x <= 31 |
+| Hour | int | 0 <= x <= 23 |
+| Minute | int | 0 <= x <= 59 |
+| Second | int | 0 <= x <= 59 |
+
+#### String Types
+
+| Type | Constraint | Pattern |
+|------|------------|---------|
+| NonEmptyStr | len > 0 | - |
+| TrimmedStr | no leading/trailing whitespace | `^\S.*\S$\|^\S$` |
+| Identifier | valid Python identifier | `^[a-zA-Z_][a-zA-Z0-9_]*$` |
+| Slug | lowercase, hyphens, alphanumeric | `^[a-z0-9]+(-[a-z0-9]+)*$` |
+| Email | valid email format | RFC 5322 pattern |
+| Url | valid URL format | scheme + netloc |
+| FilePath | path exists | os.path.exists check |
+
+### TypeConstraints (Dataclass)
+
+Introspection result from `extract_constraints()`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| min_value | int \| float \| None | Minimum allowed value |
+| max_value | int \| float \| None | Maximum allowed value |
+| min_length | int \| None | Minimum string length |
+| max_length | int \| None | Maximum string length |
+| pattern | str \| None | Regex pattern for validation |
+| description | str | Human-readable constraint description |
+
+### Contract Decorators
+
+Wrappers around deal library decorators. Defined in `hive.contracts`.
+
+| Decorator | Purpose | On Violation |
+|-----------|---------|--------------|
+| @requires(condition, message) | Precondition check | Raises CommandError |
+| @ensures(condition, message) | Postcondition check | Raises CommandError |
+| @invariant(condition, message) | Class invariant | Raises CommandError |
+
+### MockExecutionContext
+
+Test double for ExecutionContext. Defined in `hive.testing`.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| db | MagicMock | Mock database session |
+| config | AppSettings | Test configuration |
+| output | MagicMock | Mock output formatter |
+| command_name | str | "test_command" |
+| output_format | OutputFormat | JSON |
+| interactive | bool | False |
 
 ## Entity Relationships Diagram
 

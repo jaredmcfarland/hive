@@ -7,6 +7,8 @@ Generators read from the registry to produce CLI, TUI, and other artifacts.
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
+import deal
+
 from hive.core.types import (
     CommandRegistration,
     EntityRegistration,
@@ -69,6 +71,14 @@ class ApplicationRegistry:
                 f"Cannot register {kind} '{name}': name already registered"
             )
 
+    @deal.pre(
+        lambda _self, registration: registration.name and len(registration.name) > 0,
+        message="Command name required",
+    )
+    @deal.pre(
+        lambda _self, registration: registration.func is not None,
+        message="Command function required",
+    )
     def register_command(self, registration: CommandRegistration) -> None:
         """Register a command.
 

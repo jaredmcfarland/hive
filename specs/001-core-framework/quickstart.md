@@ -1,7 +1,8 @@
 # Quickstart: Core Framework
 
 **Feature**: 001-core-framework
-**Date**: 2026-01-11
+**Created**: 2026-01-11
+**Updated**: 2026-01-17
 
 ## Prerequisites
 
@@ -191,11 +192,99 @@ If you see type-related errors in decorators:
 - Check that all function parameters have type annotations
 - Return types should be Pydantic models or primitives
 
+## Using Refinement Types
+
+Hive provides refinement types that validate inputs automatically:
+
+### Update the Command with Validation
+
+```python
+from hive import App, command
+from hive.types import PositiveInt, NonEmptyStr, Argument, Option
+from typing import Annotated
+
+@command(app, entities=[Task])
+async def add(
+    ctx,
+    title: Annotated[NonEmptyStr, Argument(help="Task title")],
+    priority: Annotated[PositiveInt, Option("--priority", "-p", help="Priority (1+)")] = 1,
+) -> TaskResult:
+    """Add a new task with validation."""
+    task = Task(title=title, priority=priority)
+    ctx.db.add(task)
+    await ctx.db.commit()
+    await ctx.db.refresh(task)
+    return TaskResult(task=task, message=f"Created task #{task.id}")
+```
+
+### Test Validation
+
+```bash
+# Valid inputs work normally
+$ python -m todo add "Buy groceries" --priority 2
+Created task #1
+
+# Empty title is rejected with clear message
+$ python -m todo add "" --priority 1
+Error: title must be a non-empty string
+
+# Non-positive priority is rejected
+$ python -m todo add "Test" --priority 0
+Error: priority must be a positive integer (> 0)
+```
+
+## Using Contract Decorators
+
+Add business logic validation with `@requires` and `@ensures`:
+
+```python
+from hive import App, command
+from hive.contracts import requires, ensures
+
+@command(app, entities=[Task])
+@requires(lambda ctx, task_id: task_id > 0, "Task ID must be positive")
+@ensures(lambda ctx, task_id, result: result is not None, "Task must be returned")
+async def get(ctx, task_id: int) -> Task:
+    """Get a task by ID."""
+    task = await ctx.db.get(Task, task_id)
+    if not task:
+        raise CommandError(f"Task #{task_id} not found")
+    return task
+```
+
+## Property-Based Testing
+
+Use Hypothesis with auto-generated strategies:
+
+```python
+from hypothesis import given
+from hive.testing import strategy_for_type, MockExecutionContext
+from hive.types import PositiveInt, NonEmptyStr
+
+@given(
+    priority=strategy_for_type(PositiveInt),
+    title=strategy_for_type(NonEmptyStr),
+)
+def test_add_accepts_valid_inputs(priority, title):
+    """Property: add command accepts all valid inputs."""
+    assert priority > 0
+    assert len(title) > 0
+
+async def test_add_creates_task():
+    """Integration test with mock context."""
+    async with MockExecutionContext() as ctx:
+        result = await add(ctx, title="Test", priority=1)
+        assert ctx.db.add.called
+```
+
 ## Next Steps
 
 1. Add more commands and queries
 2. Define additional entities with relationships
-3. Add a TUI with `@screen` decorator (Phase 2)
-4. Enable MCP server for AI agent integration (Phase 3)
+3. Use refinement types for all user inputs
+4. Add contract decorators for business rules
+5. Write property-based tests for edge cases
+6. Add a TUI with `@screen` decorator (Phase 2)
+7. Enable MCP server for AI agent integration (Phase 3)
 
 See the full documentation at [hive.dev/docs](https://hive.dev/docs).

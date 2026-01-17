@@ -1,7 +1,8 @@
 # Research: Core Framework
 
 **Feature**: 001-core-framework
-**Date**: 2026-01-11
+**Created**: 2026-01-11
+**Updated**: 2026-01-17
 **Status**: Complete
 
 ## Research Areas
@@ -277,3 +278,137 @@ class ConfigurationError(HiveError):
 
 3. **Q: How to validate entity relationships at registration time?**
    A: Validate when all modules imported (app.validate() call); warn about missing referenced entities.
+
+---
+
+## Verification Stack Research (Added 2026-01-17)
+
+### 9. Refinement Types Implementation
+
+**Decision**: Use `Annotated` with beartype `Is[]` validators for runtime type constraints.
+
+**Rationale**:
+- beartype provides zero-cost runtime validation (O(1) type checking)
+- `Annotated` is standard Python 3.9+ (PEP 593)
+- `Is[]` validators allow arbitrary constraints via lambda predicates
+- Type aliases preserve IDE autocomplete and type checker compatibility
+- Constraints are introspectable for CLI help and JSON Schema generation
+
+**Alternatives Considered**:
+- Pydantic constrained types: Requires model wrapper; doesn't work with plain functions
+- NewType: No runtime validation; only static type checking
+- Custom validator classes: More boilerplate; less integration with type system
+- typeguard: Less performant; fewer constraint options
+
+**Implementation Notes**:
+```python
+from typing import Annotated
+from beartype.vale import Is
+
+PositiveInt = Annotated[int, Is[lambda x: x > 0]]
+Port = Annotated[int, Is[lambda x: 1 <= x <= 65535]]
+```
+
+### 10. Contract Decorator Pattern
+
+**Decision**: Wrap deal library decorators with Hive-specific error handling.
+
+**Rationale**:
+- deal is mature, well-tested design-by-contract library
+- Decorators integrate naturally with async functions
+- Violations can be caught and converted to CommandError
+- deal supports preconditions, postconditions, and invariants
+- No runtime overhead when contracts disabled (production mode)
+
+**Alternatives Considered**:
+- icontract: Less async support; more verbose syntax
+- dpcontracts: Abandoned project; Python 2 era
+- Custom implementation: Reinventing the wheel; less tested
+
+**Implementation Notes**:
+```python
+import deal
+from hive.errors import CommandError
+
+def requires(condition, message):
+    def decorator(func):
+        @deal.pre(condition, message=message)
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except deal.PreContractError as e:
+                raise CommandError(str(e))
+        return wrapper
+    return decorator
+```
+
+### 11. Hypothesis Strategy Generation
+
+**Decision**: Generate strategies by introspecting refinement type constraints.
+
+**Rationale**:
+- Hypothesis is the standard Python property-based testing library
+- Auto-generation reduces test writing burden
+- Strategies can be derived from `Is[]` validator constraints
+- Consistent with "specification-driven" philosophy
+
+**Alternatives Considered**:
+- Manual strategy per type: More work; easy to forget edge cases
+- pytest-quickcheck: Less powerful; fewer composability options
+- Schemathesis (for API testing): Different use case; not unit testing
+
+**Implementation Notes**:
+```python
+from hypothesis import strategies as st
+
+def strategy_for_type(typ):
+    constraints = extract_constraints(typ)
+    if constraints.min_value is not None:
+        return st.integers(min_value=constraints.min_value,
+                          max_value=constraints.max_value)
+    # ... handle other constraint types
+```
+
+### 12. CLI Error Message Translation
+
+**Decision**: Catch beartype exceptions in CLI layer and format user-friendly messages.
+
+**Rationale**:
+- beartype tracebacks are technical and unfriendly
+- User-facing errors should explain constraints clearly
+- Translation happens at CLI boundary, not in type system
+- Error messages can include constraint descriptions
+
+**Alternatives Considered**:
+- Custom exception types: More classes; less standard
+- Always-on validation wrapper: Performance overhead
+- Let tracebacks through: Poor user experience
+
+**Implementation Notes**:
+```python
+# In CLI generator
+try:
+    result = await command_func(ctx, **parsed_args)
+except BeartypeCallHintViolation as e:
+    constraint = extract_constraint_from_error(e)
+    raise typer.BadParameter(
+        f"{e.param_name} must be {constraint.description}"
+    )
+```
+
+## Technology Decisions Summary (Updated)
+
+| Area | Decision | Key Library |
+|------|----------|-------------|
+| Decorators | Class-based factories | functools, inspect |
+| Type extraction | get_type_hints + signature | typing, inspect |
+| Async bridge | asyncio.run() wrapper | asyncio |
+| Registry | Frozen dataclasses + dicts | dataclasses |
+| Context | First-param, context manager | N/A (custom) |
+| Output | Format-aware OutputFormatter | Rich |
+| Config | Pydantic Settings | pydantic-settings |
+| Errors | Custom hierarchy | N/A (custom) |
+| Refinement types | Annotated + beartype Is[] | beartype |
+| Contracts | deal wrappers | deal |
+| Testing | Hypothesis strategies | hypothesis |
