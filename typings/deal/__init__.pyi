@@ -27,7 +27,7 @@ def ensure(
     exception: type[Exception] | Exception | None = None,
 ) -> Callable[[_C], _C]: ...
 
-def inv[T](
+def inv(
     validator: Callable[[_T], bool],
     *,
     message: str | None = None,
