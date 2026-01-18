@@ -119,8 +119,8 @@ from typing import Annotated
 import re
 
 # Compose validators with & (and), | (or)
-Username = Annotated[str, 
-    Is[lambda s: len(s) >= 3] & 
+Username = Annotated[str,
+    Is[lambda s: len(s) >= 3] &
     Is[lambda s: len(s) <= 20] &
     Is[lambda s: s.isalnum()]
 ]
@@ -239,7 +239,7 @@ Class-level constraints that must always hold:
 class BankAccount:
     def __init__(self, balance: float):
         self.balance = balance
-    
+
     def withdraw(self, amount: float):
         self.balance -= amount  # Raises InvContractError if balance goes negative
 ```
@@ -255,14 +255,14 @@ T = TypeVar('T')
 @deal.inv(lambda self: self._is_sorted())
 class SortedList:
     """A list that maintains sorted order."""
-    
+
     def __init__(self):
         self._items: List = []
-    
+
     def _is_sorted(self) -> bool:
-        return all(self._items[i] <= self._items[i+1] 
+        return all(self._items[i] <= self._items[i+1]
                    for i in range(len(self._items) - 1))
-    
+
     @deal.pre(lambda self, item: item is not None)
     @deal.post(lambda result: result is None)
     @deal.ensure(lambda self, item, result: item in self._items)
@@ -277,13 +277,13 @@ class SortedList:
             else:
                 hi = mid
         self._items.insert(lo, item)
-    
+
     @deal.pre(lambda self: len(self._items) > 0, message="Cannot pop from empty list")
     @deal.ensure(lambda self, result: result not in self._items)
     def pop_min(self):
         """Remove and return the minimum element."""
         return self._items.pop(0)
-    
+
     @deal.pre(lambda self, item: item in self._items, message="Item not found")
     def remove(self, item) -> None:
         """Remove first occurrence of item."""
@@ -400,14 +400,14 @@ crosshair reads contracts from docstrings or deal decorators:
 def binary_search(arr: list[int], target: int) -> int:
     """
     Find target in sorted array.
-    
+
     pre: all(arr[i] <= arr[i+1] for i in range(len(arr)-1))
     post: __return__ == -1 or (0 <= __return__ < len(arr) and arr[__return__] == target)
     post: __return__ == -1 implies all(x != target for x in arr)
     """
     if not arr:
         return -1
-    
+
     lo, hi = 0, len(arr) - 1
     while lo <= hi:
         mid = (lo + hi) // 2
@@ -485,7 +485,7 @@ from hypothesis import given, strategies as st
 def integer_sqrt(x: int) -> int:
     """
     Integer square root with full specification.
-    
+
     Verified by:
     - crosshair: symbolic proof for bounded integers
     - hypothesis: randomized testing for quick feedback
@@ -493,7 +493,7 @@ def integer_sqrt(x: int) -> int:
     """
     if x == 0:
         return 0
-    
+
     # Newton's method
     guess = x
     while True:
@@ -628,16 +628,16 @@ import inspect
 def strategy_for_refined_type(refined_type):
     """
     Generate a Hypothesis strategy that satisfies a beartype refined type.
-    
+
     This is a simplified example - production code would handle more cases.
     """
     origin = get_origin(refined_type)
-    
+
     if origin is Annotated:
         args = get_args(refined_type)
         base_type = args[0]
         validators = args[1:]
-        
+
         # Get base strategy
         if base_type == int:
             base_strategy = st.integers()
@@ -647,14 +647,14 @@ def strategy_for_refined_type(refined_type):
             base_strategy = st.text()
         else:
             base_strategy = st.from_type(base_type)
-        
+
         # Filter by validators
         for validator in validators:
             if hasattr(validator, '_is_valid'):
                 base_strategy = base_strategy.filter(validator._is_valid)
-        
+
         return base_strategy
-    
+
     return st.from_type(refined_type)
 ```
 
@@ -742,45 +742,45 @@ T = TypeVar('T')
 class BoundedStack(Generic[T]):
     """
     A stack with a maximum capacity.
-    
+
     Invariants:
     - Stack size is always between 0 and capacity
     - LIFO ordering is maintained
-    
+
     All operations are O(1).
     """
-    
+
     @beartype
     def __init__(self, capacity: Capacity):
         """
         Create an empty bounded stack.
-        
+
         pre: capacity > 0
         post: self.is_empty()
         """
         self._capacity = capacity
         self._items: List[T] = []
-    
+
     @property
     def capacity(self) -> int:
         """Maximum number of elements this stack can hold."""
         return self._capacity
-    
+
     @deal.ensure(lambda self, result: result == len(self._items))
     def size(self) -> NonNegativeInt:
         """Current number of elements in the stack."""
         return len(self._items)
-    
+
     @deal.ensure(lambda self, result: result == (len(self._items) == 0))
     def is_empty(self) -> bool:
         """True if the stack contains no elements."""
         return len(self._items) == 0
-    
+
     @deal.ensure(lambda self, result: result == (len(self._items) == self._capacity))
     def is_full(self) -> bool:
         """True if the stack is at capacity."""
         return len(self._items) == self._capacity
-    
+
     @deal.pre(lambda self, item: not self.is_full(), message="Stack is full")
     @deal.ensure(lambda self, item, result: self._items[-1] == item)
     @deal.ensure(lambda self, item, result: len(self._items) == len(deal.old(self._items)) + 1)
@@ -788,35 +788,35 @@ class BoundedStack(Generic[T]):
     def push(self, item: T) -> None:
         """
         Add an item to the top of the stack.
-        
+
         Raises:
             PreContractError: If stack is full
         """
         self._items.append(item)
-    
+
     @deal.pre(lambda self: not self.is_empty(), message="Stack is empty")
     @deal.ensure(lambda self, result: len(self._items) == len(deal.old(self._items)) - 1)
     def pop(self) -> T:
         """
         Remove and return the top item.
-        
+
         Raises:
             PreContractError: If stack is empty
         """
         return self._items.pop()
-    
+
     @deal.pre(lambda self: not self.is_empty(), message="Stack is empty")
     @deal.ensure(lambda self, result: result == self._items[-1])
     @deal.ensure(lambda self, result: len(self._items) == len(deal.old(self._items)))
     def peek(self) -> T:
         """
         Return the top item without removing it.
-        
+
         Raises:
             PreContractError: If stack is empty
         """
         return self._items[-1]
-    
+
     @deal.ensure(lambda self, result: self.is_empty())
     def clear(self) -> None:
         """Remove all items from the stack."""
@@ -844,11 +844,11 @@ test_peek_contracts = deal.cases(BoundedStack.peek)
 def test_push_pop_inverse(capacity, items):
     """Push then pop returns items in reverse order (LIFO)."""
     assume(len(items) <= capacity)
-    
+
     stack = BoundedStack(capacity)
     for item in items:
         stack.push(item)
-    
+
     popped = [stack.pop() for _ in items]
     assert popped == list(reversed(items))
 
@@ -860,15 +860,15 @@ def test_push_pop_inverse(capacity, items):
 def test_peek_does_not_modify(capacity, items):
     """Peek returns top item without changing stack size."""
     assume(len(items) <= capacity)
-    
+
     stack = BoundedStack(capacity)
     for item in items:
         stack.push(item)
-    
+
     size_before = stack.size()
     top = stack.peek()
     size_after = stack.size()
-    
+
     assert size_before == size_after
     assert top == items[-1]
 
@@ -877,15 +877,15 @@ def test_peek_does_not_modify(capacity, items):
 def test_size_invariant(capacity):
     """Size is always between 0 and capacity."""
     stack = BoundedStack(capacity)
-    
+
     assert stack.size() == 0
     assert stack.size() <= capacity
-    
+
     # Fill to capacity
     for i in range(capacity):
         stack.push(i)
         assert 0 <= stack.size() <= capacity
-    
+
     # Empty completely
     for _ in range(capacity):
         stack.pop()
@@ -993,33 +993,33 @@ DistanceKm = Annotated[float, Is[lambda x: x >= 0.0]]
 
 @beartype
 @deal.post(lambda result: result >= 0.0)
-@deal.ensure(lambda lat1, lon1, lat2, lon2, result: 
+@deal.ensure(lambda lat1, lon1, lat2, lon2, result:
     result == 0.0 if (lat1 == lat2 and lon1 == lon2) else result > 0.0)
 def haversine_distance(
-    lat1: Latitude, 
-    lon1: Longitude, 
-    lat2: Latitude, 
+    lat1: Latitude,
+    lon1: Longitude,
+    lat2: Latitude,
     lon2: Longitude
 ) -> DistanceKm:
     """
     Calculate great-circle distance between two points.
-    
+
     An AI agent reading this function knows:
     - Exact valid ranges for all inputs
     - Output is always non-negative
     - Distance is zero iff points are identical
     """
     from math import radians, sin, cos, sqrt, atan2
-    
+
     R = 6371.0  # Earth's radius in km
-    
+
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    
+
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * atan2(sqrt(a), sqrt(1-a))
-    
+
     return R * c
 ```
 
@@ -1040,7 +1040,7 @@ class UserEvent:
 
 @beartype
 @deal.pre(lambda events: len(events) > 0, message="Need at least one event")
-@deal.pre(lambda events: len(set(e.user_id for e in events)) == 1, 
+@deal.pre(lambda events: len(set(e.user_id for e in events)) == 1,
           message="All events must be for same user")
 @deal.post(lambda result: "user_id" in result)
 @deal.post(lambda result: "event_count" in result)
@@ -1050,7 +1050,7 @@ class UserEvent:
 def aggregate_user_events(events: List[UserEvent]) -> Dict[str, Any]:
     """
     Aggregate events for a single user into a summary.
-    
+
     Contracts guarantee:
     - Input is non-empty and single-user
     - Output always has user_id and event_count
@@ -1058,10 +1058,10 @@ def aggregate_user_events(events: List[UserEvent]) -> Dict[str, Any]:
     """
     user_id = events[0].user_id
     event_types = {}
-    
+
     for event in events:
         event_types[event.event_type] = event_types.get(event.event_type, 0) + 1
-    
+
     return {
         "user_id": user_id,
         "event_count": len(events),
@@ -1093,16 +1093,16 @@ class PipelineStep:
 class VerifiedPipeline:
     """
     A pipeline where each step has explicit contracts.
-    
+
     AI agents can:
     - Inspect the pipeline structure
     - Verify each step's contracts
     - Understand data flow
     """
-    
+
     def __init__(self):
         self._steps: List[PipelineStep] = []
-    
+
     @deal.pre(lambda self, step: callable(step.transform))
     @deal.pre(lambda self, step: callable(step.input_validator))
     @deal.pre(lambda self, step: callable(step.output_validator))
@@ -1110,17 +1110,17 @@ class VerifiedPipeline:
         """Add a verified step to the pipeline."""
         self._steps.append(step)
         return self
-    
+
     @deal.pre(lambda self, data: len(self._steps) > 0, message="Pipeline is empty")
     def run(self, data: Any) -> Any:
         """
         Execute pipeline with contract checking at each step.
-        
+
         Raises:
             ValueError: If any step's input/output contract fails
         """
         current = data
-        
+
         for step in self._steps:
             # Verify input contract
             if not step.input_validator(current):
@@ -1128,19 +1128,19 @@ class VerifiedPipeline:
                     f"Step '{step.name}' input validation failed. "
                     f"Data: {current!r}"
                 )
-            
+
             # Transform
             current = step.transform(current)
-            
+
             # Verify output contract
             if not step.output_validator(current):
                 raise ValueError(
                     f"Step '{step.name}' output validation failed. "
                     f"Data: {current!r}"
                 )
-        
+
         return current
-    
+
     def describe(self) -> str:
         """Generate human/agent-readable pipeline description."""
         lines = ["Pipeline Steps:"]
@@ -1178,7 +1178,7 @@ from typing import Callable, Dict, Any, List
 def extract_contracts(func: Callable) -> Dict[str, Any]:
     """
     Extract contract information from a function for agent consumption.
-    
+
     Returns a structured description of:
     - Preconditions
     - Postconditions
@@ -1194,11 +1194,11 @@ def extract_contracts(func: Callable) -> Dict[str, Any]:
         "ensures": [],
         "type_hints": {}
     }
-    
+
     # Extract type hints
     hints = get_type_hints(func) if hasattr(func, '__annotations__') else {}
     contracts["type_hints"] = {k: str(v) for k, v in hints.items()}
-    
+
     # Extract deal contracts
     if hasattr(func, '__wrapped__'):
         # deal stores contracts on the wrapper
@@ -1209,7 +1209,7 @@ def extract_contracts(func: Callable) -> Dict[str, Any]:
                 contracts["postconditions"].append(str(validator))
             elif isinstance(validator, deal.EnsureValidator):
                 contracts["ensures"].append(str(validator))
-    
+
     return contracts
 
 
@@ -1219,14 +1219,14 @@ def generate_agent_context(module) -> str:
     all verified functions in a module.
     """
     context = []
-    
+
     for name in dir(module):
         obj = getattr(module, name)
         if callable(obj) and not name.startswith('_'):
             contracts = extract_contracts(obj)
             if contracts["preconditions"] or contracts["postconditions"]:
                 context.append(contracts)
-    
+
     return json.dumps(context, indent=2)
 ```
 
@@ -1320,7 +1320,7 @@ pip install hypothesis[cli]
 1. **Add beartype to existing code:**
    ```python
    from beartype import beartype
-   
+
    @beartype
    def existing_function(x: int) -> str:
        ...
@@ -1331,14 +1331,14 @@ pip install hypothesis[cli]
    # types.py
    from beartype.vale import Is
    from typing import Annotated
-   
+
    PositiveInt = Annotated[int, Is[lambda x: x > 0]]
    ```
 
 3. **Add contracts to critical functions:**
    ```python
    import deal
-   
+
    @deal.pre(lambda x: x > 0)
    @deal.post(lambda result: result is not None)
    def critical_function(x):
@@ -1350,7 +1350,7 @@ pip install hypothesis[cli]
    # tests/test_contracts.py
    import deal
    from mymodule import critical_function
-   
+
    test_critical = deal.cases(critical_function)
    ```
 
@@ -1358,13 +1358,13 @@ pip install hypothesis[cli]
    ```bash
    # Type check
    mypy src/
-   
+
    # Contract lint
    deal lint src/
-   
+
    # Symbolic verification (critical code only)
    crosshair check src/mymodule/critical.py
-   
+
    # Property tests
    pytest tests/ -v
    ```

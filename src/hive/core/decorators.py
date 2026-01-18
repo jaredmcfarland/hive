@@ -19,6 +19,7 @@ from hive.core.types import (
     ParameterKind,
     QueryRegistration,
     ScreenRegistration,
+    ServiceRegistration,
 )
 from hive.types.introspection import extract_constraints
 
@@ -275,6 +276,7 @@ def screen(
     default: bool = False,
     keybinding: str | None = None,
     name: str | None = None,
+    queries: list[str] | None = None,
 ) -> Callable[[T], T]:
     """Decorator factory for registering screens.
 
@@ -285,13 +287,14 @@ def screen(
         default: If True, this is the startup screen.
         keybinding: Global key to navigate to this screen.
         name: Override the screen name (defaults to class name).
+        queries: Query names to auto-load when screen mounts.
 
     Returns:
         Decorator that registers the class and returns it unchanged.
 
     Example:
-        @screen(app, default=True, keybinding="d")
-        class DashboardScreen(Screen):
+        @screen(app, default=True, keybinding="d", queries=["list_tasks"])
+        class DashboardScreen(HiveScreen):
             '''Main dashboard.'''
             ...
     """
@@ -305,9 +308,69 @@ def screen(
             default=default,
             keybinding=keybinding,
             docstring=cls.__doc__,
+            queries=queries or [],
         )
 
         app.registry.register_screen(registration)
         return cls
+
+    return decorator
+
+
+def service(
+    app: Any,
+    *,
+    credentials: str | None = None,
+    name: str | None = None,
+    cleanup: Callable[[Any], None] | None = None,
+) -> Callable[[F], F]:
+    """Decorator factory for registering external services.
+
+    Services are lazily-instantiated external API clients with
+    credential management. The decorated function serves as a factory
+    that receives resolved credentials and returns a service instance.
+
+    Args:
+        app: The application instance.
+        credentials: Credential specification string. Format:
+            - "keyring:<service_name>" for system keyring lookup
+            - "env:<VAR_NAME>" for environment variable
+            Falls back to environment variable HIVE_{SERVICE}_CREDENTIAL.
+        name: Override the service name (defaults to function name).
+        cleanup: Optional cleanup function called on context exit.
+            Receives the service instance as argument.
+
+    Returns:
+        Decorator that registers the factory and returns it unchanged.
+
+    Example:
+        @service(app, credentials="keyring:github_token")
+        def github_client(credentials: str) -> httpx.Client:
+            '''GitHub API client.'''
+            return httpx.Client(
+                base_url="https://api.github.com",
+                headers={"Authorization": f"token {credentials}"},
+            )
+
+        # Access in command:
+        @command(app)
+        async def list_repos(ctx) -> list[dict]:
+            client = ctx.services.github_client
+            ...
+    """
+
+    def decorator(func: F) -> F:
+        service_name = name if name is not None else func.__name__
+
+        registration = ServiceRegistration(
+            name=service_name,
+            factory=func,
+            credential_key=credentials,
+            cleanup=cleanup,
+            docstring=func.__doc__,
+        )
+
+        app.registry.register_service(registration)
+        return func
 
     return decorator

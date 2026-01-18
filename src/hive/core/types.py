@@ -6,10 +6,10 @@ for commands, queries, entities, and screens.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass
@@ -147,6 +147,76 @@ class ScreenRegistration:
     default: bool = False
     keybinding: str | None = None
     docstring: str | None = None
+    queries: list[str] = field(default_factory=list)
+    """Query names to automatically load when screen mounts."""
+
+
+@dataclass(frozen=True)
+class ServiceRegistration:
+    """Registration data for an external service.
+
+    Services are lazily-instantiated external API clients with
+    credential management.
+    """
+
+    name: str
+    """Unique service identifier."""
+
+    factory: Callable[[str], Any]
+    """Factory function receiving credentials string, returns service instance."""
+
+    credential_key: str | None = None
+    """Key for credential lookup. Format: 'keyring:{name}' or 'env:{VAR_NAME}'."""
+
+    cleanup: Callable[[Any], None] | Callable[[Any], Coroutine[Any, Any, None]] | None = None
+    """Optional cleanup function called on context exit. Can be sync or async."""
+
+    docstring: str | None = None
+    """Service description for documentation."""
+
+
+@dataclass(frozen=True)
+class QueryBinding:
+    """Binding between a screen and a query for automatic data loading.
+
+    Query bindings define how screens automatically load and update
+    data from registered queries.
+    """
+
+    screen_name: str
+    """Target screen name."""
+
+    query_name: str
+    """Query to execute."""
+
+    target_property: str = "data"
+    """Reactive property to update with query results."""
+
+    transform: Callable[[Any], Any] | None = None
+    """Optional result transformer."""
+
+    refresh_on: tuple[str, ...] = ()
+    """Events that trigger refresh."""
+
+
+@dataclass
+class CredentialSpec:
+    """Specification for credential resolution.
+
+    Defines how to resolve credentials for a service from various sources.
+    """
+
+    source: Literal["keyring", "env", "prompt"]
+    """Credential source type."""
+
+    key: str
+    """Service name (for keyring) or environment variable name."""
+
+    required: bool = True
+    """If True, raise CredentialError when not found."""
+
+    mask_in_logs: bool = True
+    """Always mask credential values in output. Should always be True."""
 
 
 @dataclass

@@ -9,13 +9,14 @@ __version__ = "0.1.0"
 from hive.app import App
 
 # Decorators
-from hive.core.decorators import command, entity, query, screen
+from hive.core.decorators import command, entity, query, screen, service
 
 # Types for annotations
 from hive.core.types import Argument, Option
 from hive.errors import (
     CommandError,
     ConfigurationError,
+    CredentialError,
     HiveError,
     RegistrationError,
     ValidationError,
@@ -26,6 +27,7 @@ __all__ = [
     "Argument",
     "CommandError",
     "ConfigurationError",
+    "CredentialError",
     "HiveError",
     "Option",
     "RegistrationError",
@@ -35,4 +37,5 @@ __all__ = [
     "entity",
     "query",
     "screen",
+    "service",
 ]

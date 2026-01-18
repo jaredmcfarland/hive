@@ -194,10 +194,10 @@ async def export(
 ) -> ExportResult:
     """
     Export event data for a project.
-    
+
     Downloads events for the specified date range and stores them
     in the local database.
-    
+
     Examples:
         myapp export 123 --start 2024-01-01
         myapp export 123 -s 2024-01-01 -e 2024-01-31 --json
@@ -254,14 +254,14 @@ from hive import screen
 @screen(app, default=True, keybinding="d")
 class DashboardScreen(Screen):
     """Main dashboard."""
-    
+
     BINDINGS = [("r", "refresh", "Refresh")]
-    
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield DataTable(id="data")
         yield Footer()
-    
+
     async def on_mount(self) -> None:
         data = await self.app.queries.events(project_id=1)
         table = self.query_one("#data", DataTable)
@@ -281,16 +281,16 @@ Commands, queries, and screens receive a context object providing access to fram
 async def my_command(ctx, ...) -> Result:
     # Database access
     results = await ctx.db.exec(select(MyModel))
-    
+
     # Service clients
     data = await ctx.services.api_client.fetch()
-    
+
     # Configuration
     setting = ctx.config.my_setting
-    
+
     # Output formatting (respects --json flag)
     ctx.output.info("Processing...")
-    
+
     return Result(...)
 ```
 

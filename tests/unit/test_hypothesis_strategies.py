@@ -75,3 +75,99 @@ class TestStrategyForType:
             assert isinstance(x, int)
 
         check()
+
+    def test_plain_str_strategy(self) -> None:
+        """Plain str generates any string."""
+        from hypothesis import given, settings
+
+        from hive.testing import strategy_for_type
+
+        strategy = strategy_for_type(str)
+
+        @given(x=strategy)
+        @settings(max_examples=20)
+        def check(x: str) -> None:
+            assert isinstance(x, str)
+
+        check()
+
+    def test_plain_bool_strategy(self) -> None:
+        """Plain bool generates True or False."""
+        from hypothesis import given, settings
+
+        from hive.testing import strategy_for_type
+
+        strategy = strategy_for_type(bool)
+
+        @given(x=strategy)
+        @settings(max_examples=20)
+        def check(x: bool) -> None:
+            assert isinstance(x, bool)
+
+        check()
+
+    def test_plain_bytes_strategy(self) -> None:
+        """Plain bytes generates any bytes."""
+        from hypothesis import given, settings
+
+        from hive.testing import strategy_for_type
+
+        strategy = strategy_for_type(bytes)
+
+        @given(x=strategy)
+        @settings(max_examples=20)
+        def check(x: bytes) -> None:
+            assert isinstance(x, bytes)
+
+        check()
+
+    def test_plain_float_strategy(self) -> None:
+        """Plain float generates finite floats."""
+        import math
+
+        from hypothesis import given, settings
+
+        from hive.testing import strategy_for_type
+
+        strategy = strategy_for_type(float)
+
+        @given(x=strategy)
+        @settings(max_examples=20)
+        def check(x: float) -> None:
+            assert isinstance(x, float)
+            assert not math.isnan(x)
+            assert not math.isinf(x)
+
+        check()
+
+    def test_non_empty_str_strategy(self) -> None:
+        """NonEmptyStr strategy generates non-empty strings."""
+        from hypothesis import given, settings
+
+        from hive.testing import strategy_for_type
+        from hive.types import NonEmptyStr
+
+        strategy = strategy_for_type(NonEmptyStr)
+
+        @given(x=strategy)
+        @settings(max_examples=50)
+        def check(x: str) -> None:
+            assert len(x) > 0
+
+        check()
+
+    def test_unit_interval_strategy(self) -> None:
+        """UnitInterval strategy generates 0.0-1.0."""
+        from hypothesis import given, settings
+
+        from hive.testing import strategy_for_type
+        from hive.types import UnitInterval
+
+        strategy = strategy_for_type(UnitInterval)
+
+        @given(x=strategy)
+        @settings(max_examples=100)
+        def check(x: float) -> None:
+            assert 0.0 <= x <= 1.0
+
+        check()

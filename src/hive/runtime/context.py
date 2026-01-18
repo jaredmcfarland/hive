@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import deal
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from hive.runtime.config import AppSettings
 from hive.runtime.database import create_session_factory
 from hive.runtime.output import OutputFormat, OutputFormatter
+from hive.runtime.services import ServiceProxy
+
+if TYPE_CHECKING:
+    from hive.core.registry import ApplicationRegistry
 
 
 class ExecutionContext:
@@ -33,6 +37,7 @@ class ExecutionContext:
         command_name: str = "",
         quiet: bool = False,
         yes: bool = False,
+        registry: ApplicationRegistry | None = None,
     ) -> None:
         """Initialize the execution context.
 
@@ -42,12 +47,14 @@ class ExecutionContext:
             command_name: Name of the executing command.
             quiet: Suppress non-essential output.
             yes: Bypass confirmation prompts.
+            registry: Application registry for service access.
         """
         self._settings = settings or AppSettings()
         self._output_format = output_format
         self._command_name = command_name
         self._quiet = quiet
         self._yes = yes
+        self._registry = registry
 
         self._session_factory = create_session_factory(
             self._settings.database_url,
@@ -55,6 +62,7 @@ class ExecutionContext:
         )
         self._session: AsyncSession | None = None
         self._output = OutputFormatter(format=output_format, quiet=quiet)
+        self._services: ServiceProxy | None = None
 
         # State tracking for invariants
         self._closed = False
@@ -96,6 +104,26 @@ class ExecutionContext:
 
         return sys.stdin.isatty() and sys.stdout.isatty()
 
+    @property
+    def services(self) -> ServiceProxy:
+        """Lazy accessor for registered services.
+
+        Returns:
+            ServiceProxy providing attribute-based access to services.
+
+        Raises:
+            RuntimeError: If no registry was provided to the context.
+        """
+        if self._services is not None:
+            return self._services
+
+        if self._registry is None:
+            msg = "No registry provided. Pass registry to ExecutionContext for service access."
+            raise RuntimeError(msg)
+
+        self._services = ServiceProxy(self._registry)
+        return self._services
+
     @deal.pre(lambda self: not self._closed, message="Context is closed")
     @deal.pre(lambda self: not self._committed, message="Already committed")
     async def commit(self) -> None:
@@ -125,9 +153,15 @@ class ExecutionContext:
     ) -> bool:
         """Exit the context, committing or rolling back as appropriate.
 
+        Also cleans up any instantiated services.
+
         Returns:
             False to re-raise any exception.
         """
+        # Clean up services first
+        if self._services is not None:
+            await self._services.cleanup_services_async()
+
         if self._session is None:
             self._closed = True
             return False

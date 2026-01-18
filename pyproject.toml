@@ -44,6 +44,10 @@ dependencies = [
     # Verification stack
     "beartype>=0.18.0",
     "deal>=4.24.0",
+    # TUI and services (Phase 2)
+    "textual>=0.50.0",
+    "keyring>=25.0.0",
+    "httpx>=0.27.0",
 ]
 
 [project.optional-dependencies]
@@ -77,6 +81,9 @@ dev = [
 
     # Git hooks
     "pre-commit>=4.0.0",
+
+    # TUI testing
+    "pytest-textual-snapshot>=1.0.0",
 ]
 
 [project.urls]
