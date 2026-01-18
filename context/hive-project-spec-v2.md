@@ -1605,6 +1605,102 @@ The specification remains exportable to JSON Schema for language-agnostic consum
 
 ---
 
+## Implementation Roadmap
+
+### Phase 1: Core Framework *(In Progress)*
+
+**Milestone 1.1: Decorator System and Registry** ✅
+
+Implement the `@command`, `@query`, `@entity`, and `@screen` decorators. Build the application registry that collects decorated definitions at import time. Define the internal specification representation.
+
+Deliverables: Working decorators that register to a central registry. Ability to inspect registered commands, queries, entities, and screens at runtime.
+
+**Milestone 1.2: Execution Context** ✅
+
+Implement the Context object with database session management, configuration loading, and output formatting. Integrate SQLModel for database operations. Implement Pydantic Settings for configuration.
+
+Deliverables: Commands receive working context with database access. Configuration loads from environment and files.
+
+**Milestone 1.3: CLI Generation** ✅
+
+Implement the Typer application generator. Generate commands from registry. Handle argument parsing, help generation, and output formatting. Implement standard flags (--json, --format, --quiet).
+
+Deliverables: Working CLI generated from decorated commands. JSON output mode functional.
+
+**Milestone 1.4: Verification Stack** ✅ *(Added in v0.2.0)*
+
+Implement refinement types (beartype), contract decorators (deal), and testing utilities (Hypothesis). Integrate verification with CLI error handling for user-friendly messages.
+
+Deliverables: 20+ refinement types, @requires/@ensures/@invariant decorators, strategy_for_type() and MockExecutionContext.
+
+### Phase 2: TUI and Services
+
+**Milestone 2.1: TUI Generation**
+
+Implement the Textual application generator. Create application shell (header, footer, command palette). Implement screen registration and navigation. Integrate query data binding.
+
+Deliverables: Working TUI with screen navigation and command palette.
+
+**Milestone 2.2: Service Layer**
+
+Implement the `@service` decorator. Integrate keyring for credential storage. Implement service lifecycle management (lazy instantiation, cleanup).
+
+Deliverables: Services with credential management available in context.
+
+**Milestone 2.3: Standard Widgets**
+
+Create framework-provided widgets: themed Header/Footer, CommandPalette, ParameterModal (for command input), DataTable with query binding.
+
+Deliverables: Widget library for common TUI patterns.
+
+### Phase 3: Specification and Distribution
+
+**Milestone 3.1: Specification Export**
+
+Implement JSON Schema export from registry with constraint metadata from refinement types. Implement TOML export. Build specification diff tooling.
+
+Deliverables: Exportable specification in multiple formats with full constraint information.
+
+**Milestone 3.2: MCP Server (FastMCP)**
+
+Implement optional MCP server generation from command registry using FastMCP. Map Hive commands to FastMCP tool decorators. Support stdio and SSE transports. Generate tool descriptions and input schemas from command specifications.
+
+Deliverables: Working MCP server exposing commands as tools, compatible with Claude Desktop and other MCP clients.
+
+**Milestone 3.3: REST API (FastAPI)**
+
+Implement optional FastAPI application generation. Generate POST endpoints for commands, GET endpoints for queries. Integrate authentication options. Generate OpenAPI documentation from specifications.
+
+Deliverables: Optional REST API generation with full OpenAPI documentation.
+
+**Milestone 3.4: Project Tooling**
+
+Implement `hive new` project scaffolding. Implement `hive dev` development server. Implement `hive build` and `hive publish`. Implement `hive serve` for REST API development.
+
+Deliverables: Complete CLI tooling for project lifecycle.
+
+### Phase 4: Documentation and Polish
+
+**Milestone 4.1: Documentation Generation**
+
+Implement markdown documentation generation. Implement man page generation. Auto-generate from specification with constraint documentation.
+
+Deliverables: Documentation pipeline from spec to multiple formats.
+
+**Milestone 4.2: Testing Utilities**
+
+Implement TestClient for command testing. Implement conformance test generation. Extend property-based testing integration.
+
+Deliverables: Testing framework for Hive applications.
+
+**Milestone 4.3: Example Applications**
+
+Build reference implementations: minimal app, CRUD app, API client app, analytics app (demonstrating DuckDB).
+
+Deliverables: Example projects demonstrating framework capabilities including verification stack.
+
+---
+
 ## Open Questions
 
 Several design decisions remain open for resolution during implementation.
