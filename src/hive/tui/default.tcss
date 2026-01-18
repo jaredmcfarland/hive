@@ -105,54 +105,6 @@ HiveDataTable.hive-data-table--empty {
 }
 
 /* ============================================================================
- * CommandPalette
- * ============================================================================ */
-
-CommandPalette {
-    layer: command-palette;
-    dock: top;
-    width: 60%;
-    max-width: 80;
-    min-width: 40;
-    margin: 2 0;
-    padding: 1;
-    background: $surface;
-    border: solid $primary;
-}
-
-CommandPalette:hidden {
-    display: none;
-}
-
-CommandPalette .command-palette--search {
-    width: 100%;
-    margin-bottom: 1;
-    background: $background;
-    border: solid $primary-darken-1;
-}
-
-CommandPalette .command-palette--list {
-    height: auto;
-    max-height: 15;
-    overflow-y: auto;
-}
-
-CommandPalette .command-palette--item {
-    padding: 0 1;
-    color: $text;
-}
-
-CommandPalette .command-palette--item-selected {
-    background: $primary;
-    color: $text;
-}
-
-CommandPalette .command-palette--description {
-    color: $text-muted;
-    text-style: italic;
-}
-
-/* ============================================================================
  * ParameterModal
  * ============================================================================ */
 

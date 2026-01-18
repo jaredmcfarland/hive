@@ -378,9 +378,10 @@ class TestCommandPaletteExecution:
     @pytest.mark.asyncio
     async def test_command_palette_opens_with_ctrl_p(self) -> None:
         """Pressing Ctrl+P opens the command palette."""
+        from textual.command import CommandPalette as TextualCommandPalette
+
         from hive.generators.tui import generate_tui_app
         from hive.tui.screens import HiveScreen
-        from hive.tui.widgets.palette import CommandPalette
 
         app = App("test")
 
@@ -399,13 +400,12 @@ class TestCommandPaletteExecution:
         async with tui_app.run_test() as pilot:
             await pilot.pause()
 
-            # Press Ctrl+P to open palette
+            # Press Ctrl+P to open palette (Textual's default binding)
             await pilot.press("ctrl+p")
             await pilot.pause()
 
-            # CommandPalette should be visible
-            palette = tui_app.query_one(CommandPalette)
-            assert palette.display is True
+            # Textual's CommandPalette is a modal screen, check screen type
+            assert isinstance(tui_app.screen, TextualCommandPalette)
 
     @pytest.mark.asyncio
     async def test_command_execution_via_palette(self) -> None:
@@ -434,15 +434,21 @@ class TestCommandPaletteExecution:
         async with tui_app.run_test() as pilot:
             await pilot.pause()
 
-            # Open palette
+            # Open palette (Textual's built-in command palette)
             await pilot.press("ctrl+p")
             await pilot.pause()
 
-            # Select the command (Enter on first command)
+            # Type to filter to our command
+            await pilot.press("g", "r", "e", "e", "t")
+            await pilot.pause()
+
+            # Select the command (Enter on highlighted command)
             await pilot.press("enter")
             await pilot.pause()
 
-            # Submit the form (use default value)
+            # Tab to the submit button and press Enter
+            await pilot.press("tab")  # Move to submit button
+            await pilot.pause()
             await pilot.press("enter")
             await pilot.pause()
 
@@ -549,23 +555,27 @@ class TestCommandPaletteExecution:
         """Typing in palette search filters the command list."""
         from typing import Any
 
+        from textual.command import CommandPalette as TextualCommandPalette
+
         from hive.core.decorators import command
         from hive.generators.tui import generate_tui_app
         from hive.tui.screens import HiveScreen
-        from hive.tui.widgets.palette import CommandPalette
 
         app = App("test")
+        executed_commands: list[str] = []
 
         @command(app)
-        async def create_user(ctx: Any, name: str) -> dict[str, str]:
+        async def create_user(ctx: Any, name: str = "test") -> dict[str, str]:
+            executed_commands.append("create_user")
             return {"name": name}
 
         @command(app)
-        async def delete_user(ctx: Any, user_id: int) -> None:
-            pass
+        async def delete_user(ctx: Any, user_id: int = 1) -> None:
+            executed_commands.append("delete_user")
 
         @command(app)
         async def list_items(ctx: Any) -> list[str]:
+            executed_commands.append("list_items")
             return []
 
         @screen(app, default=True)
@@ -577,27 +587,30 @@ class TestCommandPaletteExecution:
         async with tui_app.run_test() as pilot:
             await pilot.pause()
 
-            # Open palette
+            # Open Textual's built-in command palette
             await pilot.press("ctrl+p")
             await pilot.pause()
 
-            palette = tui_app.query_one(CommandPalette)
-            initial_count = palette.visible_command_count
+            # Verify palette is open (it's a modal screen)
+            assert isinstance(tui_app.screen, TextualCommandPalette)
 
-            # Get the search input and set its value directly
-            # This is more reliable than sending key events
-            from textual.widgets import Input
-
-            search_input = palette.query_one("#palette-search", Input)
-            search_input.value = "user"
+            # Type to filter commands - "delete" should filter to delete_user
+            await pilot.press("d", "e", "l", "e", "t", "e")
             await pilot.pause()
 
-            # Should have fewer commands visible (only user-related)
-            filtered_count = palette.visible_command_count
-            assert filtered_count < initial_count, (
-                f"Expected filter to reduce count from {initial_count}"
-            )
-            assert filtered_count == 2  # create_user and delete_user
+            # Select and execute the filtered command
+            await pilot.press("enter")
+            await pilot.pause()
+
+            # Tab to submit button and submit the modal form
+            await pilot.press("tab")
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+
+            # Only delete_user should have been executed (the filtered result)
+            assert "delete_user" in executed_commands
+            assert "list_items" not in executed_commands
 
     @pytest.mark.asyncio
     async def test_command_uses_same_execution_path_as_cli(self) -> None:
