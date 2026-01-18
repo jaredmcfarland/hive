@@ -29,14 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
@@ -57,14 +55,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
@@ -83,14 +79,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
@@ -120,14 +114,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
@@ -146,14 +138,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
@@ -175,14 +165,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
@@ -201,14 +189,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Set up uv and Python
         uses: astral-sh/setup-uv@v5
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: uv sync --dev
