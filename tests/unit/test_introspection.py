@@ -1,8 +1,6 @@
 """Test constraint metadata extraction from refinement types."""
 
 
-
-
 class TestExtractConstraints:
     """Tests for extract_constraints function."""
 

@@ -1,9 +1,11 @@
 """Output formatting for CLI commands."""
 
-import json
-import sys
+from __future__ import annotations
+
 from collections.abc import Sequence
 from enum import Enum
+import json
+import sys
 from typing import Any
 
 from pydantic import BaseModel
@@ -45,7 +47,7 @@ class OutputFormatter:
         self._console = console or Console()
         self._err_console = Console(stderr=True)
 
-    def result(self, data: BaseModel | Sequence[BaseModel] | dict | list) -> None:
+    def result(self, data: BaseModel | Sequence[BaseModel] | dict[str, Any] | list[Any]) -> None:
         """Output the main result of a command.
 
         Args:
@@ -60,7 +62,7 @@ class OutputFormatter:
 
     def table(
         self,
-        items: Sequence[BaseModel | dict],
+        items: Sequence[BaseModel | dict[str, Any]],
         columns: list[str] | None = None,
     ) -> None:
         """Output items as a table.
@@ -81,10 +83,10 @@ class OutputFormatter:
         first = items[0]
         if columns is None:
             if isinstance(first, BaseModel):
-                columns = list(first.model_fields.keys())
+                columns = list(type(first).model_fields.keys())
             elif isinstance(first, dict):
                 columns = list(first.keys())
-            else:
+            else:  # pragma: no cover
                 columns = ["value"]
 
         # Create Rich table
@@ -97,7 +99,7 @@ class OutputFormatter:
                 values = [str(getattr(item, col, "")) for col in columns]
             elif isinstance(item, dict):
                 values = [str(item.get(col, "")) for col in columns]
-            else:
+            else:  # pragma: no cover
                 values = [str(item)]
             table.add_row(*values)
 
@@ -136,7 +138,7 @@ class OutputFormatter:
         """
         self._err_console.print(f"[red]✗[/red] {message}")
 
-    def confirm(self, prompt: str, default: bool = False) -> bool:
+    def confirm(self, prompt: str, default: bool = False) -> bool:  # pragma: no cover
         """Ask for confirmation.
 
         In non-interactive mode or when --yes is set, returns the default.
@@ -160,13 +162,10 @@ class OutputFormatter:
         if isinstance(data, BaseModel):
             output = data.model_dump()
         elif isinstance(data, (list, tuple)):
-            output = [
-                item.model_dump() if isinstance(item, BaseModel) else item
-                for item in data
-            ]
+            output = [item.model_dump() if isinstance(item, BaseModel) else item for item in data]
         elif isinstance(data, dict):
             output = data
-        else:
+        else:  # pragma: no cover
             output = data
 
         print(json.dumps(output, indent=None, default=str))
@@ -193,7 +192,7 @@ class OutputFormatter:
                 table.add_row(str(key), str(value))
 
             self._console.print(table)
-        else:
+        else:  # pragma: no cover
             self._console.print(str(data))
 
     def _output_csv(self, data: Any) -> None:
@@ -205,7 +204,7 @@ class OutputFormatter:
             items = [data]
         elif isinstance(data, (list, tuple)):
             items = list(data)
-        else:
+        else:  # pragma: no cover
             print(str(data))
             return
 
@@ -215,10 +214,10 @@ class OutputFormatter:
         # Get field names from first item
         first = items[0]
         if isinstance(first, BaseModel):
-            fieldnames = list(first.model_fields.keys())
+            fieldnames = list(type(first).model_fields.keys())
         elif isinstance(first, dict):
             fieldnames = list(first.keys())
-        else:
+        else:  # pragma: no cover
             print("\n".join(str(item) for item in items))
             return
 

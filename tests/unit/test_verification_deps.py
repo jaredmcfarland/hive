@@ -1,7 +1,6 @@
 """Test that verification dependencies are available."""
 
 
-
 def test_beartype_importable() -> None:
     """Verify beartype is installed and importable."""
     from beartype import beartype
@@ -13,10 +12,10 @@ def test_deal_importable() -> None:
     """Verify deal is installed and importable."""
     import deal
 
-    assert hasattr(deal, 'pre')
-    assert hasattr(deal, 'post')
-    assert hasattr(deal, 'ensure')
-    assert hasattr(deal, 'inv')
+    assert hasattr(deal, "pre")
+    assert hasattr(deal, "post")
+    assert hasattr(deal, "ensure")
+    assert hasattr(deal, "inv")
 
 
 def test_hypothesis_importable() -> None:
@@ -25,4 +24,4 @@ def test_hypothesis_importable() -> None:
     from hypothesis import strategies as st
 
     assert callable(given)
-    assert hasattr(st, 'integers')
+    assert hasattr(st, "integers")

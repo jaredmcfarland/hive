@@ -5,7 +5,13 @@ Hive applications. It holds the registry and provides methods
 for generating CLI, TUI, and other interfaces.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import typer
 
 from hive.core.registry import ApplicationRegistry
 from hive.errors import ValidationError
@@ -39,6 +45,7 @@ class App:
         name: str,
         version: str = "0.1.0",
         description: str = "",
+        *,
         cli_command: str | None = None,
         tui_title: str | None = None,
         database: str | None = None,
@@ -109,8 +116,7 @@ class App:
                 if entity_cls.__name__ not in entity_names:
                     errors.append(
                         ValidationError(
-                            f"Command '{cmd.name}' references unregistered entity "
-                            f"'{entity_cls.__name__}'",
+                            f"Command '{cmd.name}' references unregistered entity '{entity_cls.__name__}'",
                             field=f"commands.{cmd.name}.entities",
                         )
                     )
@@ -120,8 +126,7 @@ class App:
                 if entity_cls.__name__ not in entity_names:
                     errors.append(
                         ValidationError(
-                            f"Query '{qry.name}' references unregistered entity "
-                            f"'{entity_cls.__name__}'",
+                            f"Query '{qry.name}' references unregistered entity '{entity_cls.__name__}'",
                             field=f"queries.{qry.name}.entities",
                         )
                     )
@@ -139,7 +144,7 @@ class App:
 
         return errors
 
-    def cli(self) -> "typer.Typer":  # noqa: F821
+    def cli(self) -> typer.Typer:
         """Get the generated Typer CLI application.
 
         Returns:

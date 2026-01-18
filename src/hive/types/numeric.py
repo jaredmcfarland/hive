@@ -1,5 +1,7 @@
 """Domain-specific numeric refinement types."""
 
+from __future__ import annotations
+
 from typing import Annotated
 
 from beartype.vale import Is

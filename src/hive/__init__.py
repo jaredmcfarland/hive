@@ -1,5 +1,7 @@
 """Hive - A framework for building terminal-agent-native applications."""
 
+from __future__ import annotations
+
 __version__ = "0.1.0"
 
 # Errors
@@ -20,17 +22,17 @@ from hive.errors import (
 )
 
 __all__ = [
-    "__version__",
     "App",
-    "command",
-    "query",
-    "entity",
-    "screen",
     "Argument",
-    "Option",
     "CommandError",
     "ConfigurationError",
     "HiveError",
+    "Option",
     "RegistrationError",
     "ValidationError",
+    "__version__",
+    "command",
+    "entity",
+    "query",
+    "screen",
 ]

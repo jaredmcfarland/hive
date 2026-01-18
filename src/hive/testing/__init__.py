@@ -1,5 +1,5 @@
 """
-Hive Testing Utilities
+Hive Testing Utilities.
 
 Tools for testing Hive commands with property-based testing.
 
@@ -21,4 +21,4 @@ Example:
 from hive.testing.mocks import MockExecutionContext
 from hive.testing.strategies import strategy_for_type
 
-__all__ = ["strategy_for_type", "MockExecutionContext"]
+__all__ = ["MockExecutionContext", "strategy_for_type"]

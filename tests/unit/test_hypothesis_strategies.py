@@ -12,7 +12,6 @@ class TestStrategyForType:
         """Strategy generates only positive integers for PositiveInt."""
 
         # Replace the ... with actual strategy
-        pass
 
     def test_positive_int_strategy_generates_valid_values(self) -> None:
         """PositiveInt strategy only generates x > 0."""
