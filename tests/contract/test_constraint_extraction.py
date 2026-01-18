@@ -1,7 +1,6 @@
 """Test that decorators extract constraints from refinement types."""
 
 
-
 class TestCommandConstraintExtraction:
     """Tests for constraint extraction in @command decorator."""
 

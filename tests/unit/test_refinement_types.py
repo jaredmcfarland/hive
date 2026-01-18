@@ -1,8 +1,8 @@
 """Test refinement types validate correctly at runtime."""
 
-import pytest
 from beartype import beartype
 from beartype.roar import BeartypeCallHintParamViolation
+import pytest
 
 
 class TestPositiveInt:

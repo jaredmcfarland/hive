@@ -1,7 +1,6 @@
 """Test that types are properly exported from hive package."""
 
 
-
 def test_types_importable_from_hive_types() -> None:
     """Common types importable from hive.types."""
     from hive.types import (

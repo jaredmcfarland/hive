@@ -1,5 +1,7 @@
 """Hive framework error classes."""
 
+from __future__ import annotations
+
 
 class HiveError(Exception):
     """Base class for all Hive errors.
@@ -45,8 +47,6 @@ class RegistrationError(HiveError):
     This includes duplicate names, invalid targets, or other
     registration-time validation failures.
     """
-
-    pass
 
 
 class ValidationError(HiveError):

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import inspect
-import re
 from collections.abc import Callable
 from dataclasses import dataclass
+import inspect
+import re
 from typing import Annotated, Any, get_args, get_origin
 
 
@@ -133,7 +133,10 @@ def _get_validator_source(validator: Any) -> str | None:
                 # Prefer the source that looks like an actual constraint lambda
                 # (contains comparison operators or function calls like re.match)
                 for source in candidates:
-                    if any(op in source for op in ["<=", ">=", "<", ">", "==", "re.match", "len(", ".is"]):
+                    if any(
+                        op in source
+                        for op in ["<=", ">=", "<", ">", "==", "re.match", "len(", ".is"]
+                    ):
                         return source
                 # Fall back to first candidate if no constraint-like lambda found
                 if candidates:
@@ -157,9 +160,7 @@ def _extract_numeric_bounds(
         max_val: float | None = None
 
         # Pattern: value <= x <= value (compound comparison) e.g., "1 <= x <= 65535"
-        match = re.search(
-            r"(\d+(?:\.\d+)?)\s*<=\s*x\s*<=\s*(\d+(?:\.\d+)?)", source
-        )
+        match = re.search(r"(\d+(?:\.\d+)?)\s*<=\s*x\s*<=\s*(\d+(?:\.\d+)?)", source)
         if match:
             min_val = float(match.group(1))
             max_val = float(match.group(2))

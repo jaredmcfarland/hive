@@ -3,14 +3,16 @@
 Generates a Typer application from the registered commands and queries.
 """
 
+from __future__ import annotations
+
 import asyncio
-import inspect
 from collections.abc import Callable
+import inspect
 from typing import Annotated, Any, Union, get_args, get_origin
 
-import typer
 from beartype import beartype
 from beartype.roar import BeartypeCallHintParamViolation
+import typer
 
 from hive.core.registry import ApplicationRegistry
 from hive.core.types import CommandRegistration, ParameterInfo, QueryRegistration
@@ -146,11 +148,7 @@ class CLIGenerator:
 
             # Run the async command
             try:
-                asyncio.run(
-                    generator._execute_command(
-                        func, settings, output_format, name, kwargs
-                    )
-                )
+                asyncio.run(generator._execute_command(func, settings, output_format, name, kwargs))
             except CommandError as e:
                 typer.echo(f"Error: {e}", err=True)
                 raise typer.Exit(e.exit_code) from None

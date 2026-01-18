@@ -1,9 +1,11 @@
 """Output formatting for CLI commands."""
 
-import json
-import sys
+from __future__ import annotations
+
 from collections.abc import Sequence
 from enum import Enum
+import json
+import sys
 from typing import Any
 
 from pydantic import BaseModel
@@ -45,7 +47,7 @@ class OutputFormatter:
         self._console = console or Console()
         self._err_console = Console(stderr=True)
 
-    def result(self, data: BaseModel | Sequence[BaseModel] | dict | list) -> None:
+    def result(self, data: BaseModel | Sequence[BaseModel] | dict[str, Any] | list[Any]) -> None:
         """Output the main result of a command.
 
         Args:
@@ -60,7 +62,7 @@ class OutputFormatter:
 
     def table(
         self,
-        items: Sequence[BaseModel | dict],
+        items: Sequence[BaseModel | dict[str, Any]],
         columns: list[str] | None = None,
     ) -> None:
         """Output items as a table.
@@ -81,7 +83,7 @@ class OutputFormatter:
         first = items[0]
         if columns is None:
             if isinstance(first, BaseModel):
-                columns = list(first.model_fields.keys())
+                columns = list(type(first).model_fields.keys())
             elif isinstance(first, dict):
                 columns = list(first.keys())
             else:
@@ -160,10 +162,7 @@ class OutputFormatter:
         if isinstance(data, BaseModel):
             output = data.model_dump()
         elif isinstance(data, (list, tuple)):
-            output = [
-                item.model_dump() if isinstance(item, BaseModel) else item
-                for item in data
-            ]
+            output = [item.model_dump() if isinstance(item, BaseModel) else item for item in data]
         elif isinstance(data, dict):
             output = data
         else:
@@ -215,7 +214,7 @@ class OutputFormatter:
         # Get field names from first item
         first = items[0]
         if isinstance(first, BaseModel):
-            fieldnames = list(first.model_fields.keys())
+            fieldnames = list(type(first).model_fields.keys())
         elif isinstance(first, dict):
             fieldnames = list(first.keys())
         else:

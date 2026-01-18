@@ -87,7 +87,6 @@ class TestJSONFlag:
         @command(app)
         async def noop(ctx) -> None:
             """Placeholder command."""
-            pass
 
         cli = app.cli()
         result = runner.invoke(cli, ["get-status", "--json"])
@@ -136,12 +135,10 @@ class TestHelpOutput:
         @command(app)
         async def create(ctx) -> None:
             """Create a resource."""
-            pass
 
         @command(app)
         async def delete(ctx) -> None:
             """Delete a resource."""
-            pass
 
         @query(app)
         async def list_resources(ctx) -> list:
@@ -165,7 +162,6 @@ class TestHelpOutput:
         @command(app)
         async def my_command(ctx) -> None:
             """This is the command description."""
-            pass
 
         cli = app.cli()
         result = runner.invoke(cli, ["my-command", "--help"])
@@ -182,7 +178,6 @@ class TestHelpOutput:
         @command(app)
         async def with_params(ctx, name: str, count: int = 10) -> None:
             """Command with parameters."""
-            pass
 
         cli = app.cli()
         result = runner.invoke(cli, ["with-params", "--help"])

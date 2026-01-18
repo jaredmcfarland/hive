@@ -1,5 +1,7 @@
 """Execution context for commands."""
 
+from __future__ import annotations
+
 from types import TracebackType
 from typing import Self
 

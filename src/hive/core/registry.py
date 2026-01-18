@@ -4,8 +4,9 @@ The registry is the central store for all decorated functions and classes.
 Generators read from the registry to produce CLI, TUI, and other artifacts.
 """
 
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 import deal
 
@@ -16,9 +17,6 @@ from hive.core.types import (
     ScreenRegistration,
 )
 from hive.errors import RegistrationError
-
-if TYPE_CHECKING:
-    pass
 
 
 class ApplicationRegistry:
@@ -67,9 +65,7 @@ class ApplicationRegistry:
             RegistrationError: If name is already registered.
         """
         if name in self._all_names:
-            raise RegistrationError(
-                f"Cannot register {kind} '{name}': name already registered"
-            )
+            raise RegistrationError(f"Cannot register {kind} '{name}': name already registered")
 
     @deal.pre(
         lambda _self, registration: registration.name and len(registration.name) > 0,
@@ -147,19 +143,21 @@ class ApplicationRegistry:
         if registration.default:
             for existing in self._screens.values():
                 if existing.default:
-                    raise RegistrationError(
+                    msg = (
                         f"Cannot register screen '{registration.name}' as default: "
                         f"'{existing.name}' is already the default screen"
                     )
+                    raise RegistrationError(msg)
 
         # Check for duplicate keybinding
         if registration.keybinding:
             for existing in self._screens.values():
                 if existing.keybinding == registration.keybinding:
-                    raise RegistrationError(
+                    msg = (
                         f"Cannot register screen '{registration.name}' with keybinding "
                         f"'{registration.keybinding}': already used by '{existing.name}'"
                     )
+                    raise RegistrationError(msg)
 
         self._screens[registration.name] = registration
 
