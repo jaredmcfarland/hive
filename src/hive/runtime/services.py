@@ -252,6 +252,12 @@ class ServiceProxy:
         Calls cleanup function for each cached service that has one.
         Errors in cleanup functions are logged but do not prevent
         other cleanups from running.
+
+        Note:
+            For services with async cleanup functions, use
+            ``cleanup_services_async()`` instead to ensure cleanup
+            completes. This method cannot guarantee async cleanup
+            completion when called from within a running event loop.
         """
         for name, instance in list(self._cache.items()):
             registration = self._registry.get_service(name)
@@ -264,9 +270,18 @@ class ServiceProxy:
                 if asyncio.iscoroutine(result):
                     # Create event loop if needed (for sync context)
                     try:
-                        loop = asyncio.get_running_loop()
-                        # Already in async context - schedule task
-                        _task = loop.create_task(result)  # noqa: RUF006
+                        asyncio.get_running_loop()
+                        # Already in async context - cannot await here
+                        # Log warning and cancel the coroutine to avoid warning
+                        logger.warning(
+                            (
+                                "Service '%s' has async cleanup but cleanup_services() "
+                                "was called from async context. Use "
+                                "cleanup_services_async() for guaranteed completion."
+                            ),
+                            name,
+                        )
+                        result.close()  # Prevent "coroutine never awaited" warning
                     except RuntimeError:
                         # No running loop - run synchronously
                         asyncio.run(result)

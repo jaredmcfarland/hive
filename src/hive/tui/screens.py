@@ -87,6 +87,11 @@ class ScreenContext:
         """Output formatter from base context."""
         return self._base.output
 
+    @property
+    def services(self) -> Any:
+        """Service proxy from base context."""
+        return self._base.services
+
     async def navigate(self, screen_name: str) -> None:
         """Navigate to a named screen.
 

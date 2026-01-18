@@ -917,9 +917,6 @@ class TestParameterModalFormGeneration:
         """Context parameter is excluded from form generation."""
         from hive.tui.widgets.modal import get_form_parameters
 
-        async def my_command(ctx: Any, title: str, count: int) -> None:
-            pass
-
         params = [
             ParameterInfo(name="ctx", type=object, kind=ParameterKind.POSITIONAL),
             ParameterInfo(name="title", type=str, kind=ParameterKind.KEYWORD),

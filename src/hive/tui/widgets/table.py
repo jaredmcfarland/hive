@@ -303,6 +303,7 @@ class HiveDataTable[T: BaseModel | dict[str, Any]](DataTable[str]):
             if row_data:
                 self.post_message(HiveRowSelected(row_key, row_data))
         except (ValueError, TypeError):
+            # Invalid row key format - silently ignore to avoid UI crash
             pass
 
     def on_data_table_header_selected(self, event: DataTable.HeaderSelected) -> None:
