@@ -1,7 +1,6 @@
 """Unit tests for configuration loading (T043)."""
 
 
-
 class TestAppSettings:
     """Tests for config loading from environment variables."""
 

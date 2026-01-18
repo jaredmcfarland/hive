@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Self
 from unittest.mock import AsyncMock, MagicMock
 
 
@@ -36,7 +36,7 @@ class MockExecutionContext:
         """Mock output formatter."""
         return self._output
 
-    async def __aenter__(self) -> MockExecutionContext:
+    async def __aenter__(self) -> Self:
         """Enter the mock context."""
         return self
 
@@ -47,12 +47,9 @@ class MockExecutionContext:
         exc_tb: Any,
     ) -> None:
         """Exit the mock context (no-op)."""
-        pass
 
     async def commit(self) -> None:
         """Mock commit (no-op)."""
-        pass
 
     async def rollback(self) -> None:
         """Mock rollback (no-op)."""
-        pass

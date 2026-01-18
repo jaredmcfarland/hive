@@ -5,7 +5,6 @@ and @screen decorators per the contracts/public-api.md specification.
 """
 
 
-
 class TestCommandDecorator:
     """Tests for @command decorator registration (T010)."""
 
@@ -51,7 +50,6 @@ class TestCommandDecorator:
         @command(app)
         async def documented(ctx) -> None:
             """This is the help text."""
-            pass
 
         reg = app.registry.get_command("documented")
         assert reg is not None
@@ -366,7 +364,6 @@ class TestScreenDecorator:
         @screen(app)
         class DashboardScreen:
             """The main dashboard."""
-            pass
 
         reg = app.registry.get_screen("DashboardScreen")
         assert reg is not None
@@ -382,7 +379,6 @@ class TestScreenDecorator:
         @screen(app, name="dashboard")
         class MainDashboard:
             """Dashboard screen."""
-            pass
 
         reg = app.registry.get_screen("dashboard")
         assert reg is not None
@@ -399,7 +395,6 @@ class TestScreenDecorator:
         @screen(app, default=True)
         class HomeScreen:
             """Home screen."""
-            pass
 
         reg = app.registry.get_screen("HomeScreen")
         assert reg is not None
@@ -414,7 +409,6 @@ class TestScreenDecorator:
         @screen(app)
         class RegularScreen:
             """A regular screen."""
-            pass
 
         reg = app.registry.get_screen("RegularScreen")
         assert reg is not None
@@ -429,7 +423,6 @@ class TestScreenDecorator:
         @screen(app, keybinding="d")
         class DashScreen:
             """Dashboard with keybinding."""
-            pass
 
         reg = app.registry.get_screen("DashScreen")
         assert reg is not None
@@ -444,7 +437,6 @@ class TestScreenDecorator:
         @screen(app)
         class DocScreen:
             """This is the screen description."""
-            pass
 
         reg = app.registry.get_screen("DocScreen")
         assert reg is not None
@@ -459,7 +451,6 @@ class TestScreenDecorator:
         @screen(app, default=True, keybinding="h")
         class HomeView:
             """Home view."""
-            pass
 
         # The decorated class should be the same as the original
         assert HomeView.__name__ == "HomeView"
@@ -473,17 +464,14 @@ class TestScreenDecorator:
         @screen(app, default=True)
         class ScreenA:
             """Screen A."""
-            pass
 
         @screen(app, keybinding="b")
         class ScreenB:
             """Screen B."""
-            pass
 
         @screen(app)
         class ScreenC:
             """Screen C."""
-            pass
 
         screens = app.registry.list_screens()
         assert len(screens) == 3

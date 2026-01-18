@@ -143,7 +143,6 @@ class TestEndToEnd:
         @command(app)
         async def noop(ctx) -> None:
             """Placeholder command."""
-            pass
 
         cli = app.cli()
         result = runner.invoke(cli, ["list-items", "--json"])

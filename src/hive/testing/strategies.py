@@ -43,17 +43,16 @@ def _strategy_for_plain_type(type_hint: Any) -> SearchStrategy[Any]:
     """Generate strategy for plain (non-Annotated) types."""
     if type_hint is int:
         return st.integers()
-    elif type_hint is float:
+    if type_hint is float:
         return st.floats(allow_nan=False, allow_infinity=False)
-    elif type_hint is str:
+    if type_hint is str:
         return st.text()
-    elif type_hint is bool:
+    if type_hint is bool:
         return st.booleans()
-    elif type_hint is bytes:
+    if type_hint is bytes:
         return st.binary()
-    else:
-        # Fallback to Hypothesis's from_type
-        return st.from_type(type_hint)
+    # Fallback to Hypothesis's from_type
+    return st.from_type(type_hint)
 
 
 def _strategy_for_annotated(type_hint: Any) -> SearchStrategy[Any]:
@@ -102,7 +101,9 @@ def _strategy_for_annotated(type_hint: Any) -> SearchStrategy[Any]:
                     base_strategy = st.text().filter(constraints.validator)
 
         # Apply length constraints
-        if (constraints.min_length is not None or constraints.max_length is not None) and base_type is str:
+        if (
+            constraints.min_length is not None or constraints.max_length is not None
+        ) and base_type is str:
             base_strategy = st.text(
                 min_size=constraints.min_length or 0,
                 max_size=constraints.max_length or 100,

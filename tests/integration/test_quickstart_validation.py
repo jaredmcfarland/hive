@@ -147,8 +147,6 @@ class TestQuickstartValidation:
         class Dashboard:
             """Main dashboard."""
 
-            pass
-
         # Verify screen is registered
         reg = app.registry.get_screen("Dashboard")
         assert reg is not None

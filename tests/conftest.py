@@ -1,8 +1,8 @@
 """Shared pytest fixtures for Hive tests."""
 
+from collections.abc import Generator
 import os
 import tempfile
-from collections.abc import Generator
 
 import pytest
 

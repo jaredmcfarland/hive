@@ -4,6 +4,8 @@ This module contains dataclasses that represent registration metadata
 for commands, queries, entities, and screens.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum

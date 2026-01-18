@@ -75,9 +75,7 @@ def ensures(condition: Callable[..., bool], message: str = "") -> Callable[[F], 
     return decorator
 
 
-def invariant(
-    condition: Callable[[Any], bool], message: str = ""
-) -> Callable[[type], type]:
+def invariant(condition: Callable[[Any], bool], message: str = "") -> Callable[[type], type]:
     """
     Class invariant decorator for Hive entities.
 

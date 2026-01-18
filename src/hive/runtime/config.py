@@ -1,7 +1,11 @@
 """Application configuration using Pydantic Settings."""
 
-from pathlib import Path
+from __future__ import annotations
 
+from pathlib import Path
+from typing import Literal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,14 +21,21 @@ class AppSettings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore",
+        extra="forbid",
+        validate_default=True,
     )
 
-    # Database configuration
-    database_url: str = f"sqlite+aiosqlite:///{Path.home()}/.hive/data.db"
+    database_url: str = Field(
+        default=f"sqlite+aiosqlite:///{Path.home()}/.hive/data.db",
+        description="Database connection URL (SQLAlchemy async format)",
+    )
 
-    # Debug mode
-    debug: bool = False
+    debug: bool = Field(
+        default=False,
+        description="Enable debug mode with verbose output",
+    )
 
-    # Logging configuration
-    log_level: str = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        default="INFO",
+        description="Logging level for the application",
+    )

@@ -1,7 +1,6 @@
 """Test ConstraintMetadata dataclass in core types."""
 
 
-
 class TestConstraintMetadata:
     """Tests for ConstraintMetadata dataclass."""
 

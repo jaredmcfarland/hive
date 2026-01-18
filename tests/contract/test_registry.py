@@ -19,7 +19,6 @@ class TestRegistryQueryMethods:
         @command(app)
         async def my_command(ctx) -> None:
             """A command."""
-            pass
 
         reg = app.registry.get_command("my_command")
         assert reg is not None
@@ -140,14 +139,12 @@ class TestDuplicateNameRejection:
         @command(app)
         async def duplicate(ctx) -> None:
             """First command."""
-            pass
 
         with pytest.raises(RegistrationError):
 
             @command(app)
-            async def duplicate(ctx) -> None:  # noqa: F811
+            async def duplicate(ctx) -> None:
                 """Second command with same name."""
-                pass
 
     def test_duplicate_query_name_raises_error(self) -> None:
         """Registering two queries with same name raises RegistrationError."""
@@ -162,7 +159,7 @@ class TestDuplicateNameRejection:
         with pytest.raises(RegistrationError):
 
             @query(app)
-            async def duplicate(ctx) -> list:  # noqa: F811
+            async def duplicate(ctx) -> list:
                 return []
 
     def test_command_and_query_same_name_raises_error(self) -> None:
@@ -178,7 +175,7 @@ class TestDuplicateNameRejection:
         with pytest.raises(RegistrationError):
 
             @query(app)
-            async def shared_name(ctx) -> list:  # noqa: F811
+            async def shared_name(ctx) -> list:
                 return []
 
     def test_custom_name_collision_detected(self) -> None:
@@ -226,14 +223,12 @@ class TestScreenValidation:
         @screen(app)
         class Dashboard:
             """First dashboard."""
-            pass
 
         with pytest.raises(RegistrationError):
 
             @screen(app)
-            class Dashboard:  # noqa: F811
+            class Dashboard:
                 """Second dashboard with same name."""
-                pass
 
     def test_multiple_default_screens_raises_error(self) -> None:
         """Only one screen can be marked as default (T072)."""
@@ -244,14 +239,12 @@ class TestScreenValidation:
         @screen(app, default=True)
         class HomeScreen:
             """Home screen (default)."""
-            pass
 
         with pytest.raises(RegistrationError) as exc_info:
 
             @screen(app, default=True)
             class DashboardScreen:
                 """Dashboard (also trying to be default)."""
-                pass
 
         assert "default" in str(exc_info.value).lower()
 
@@ -285,14 +278,12 @@ class TestScreenValidation:
         @screen(app, keybinding="d")
         class Dashboard:
             """Dashboard with 'd' keybinding."""
-            pass
 
         with pytest.raises(RegistrationError) as exc_info:
 
             @screen(app, keybinding="d")
             class DataView:
                 """Data view also trying 'd' keybinding."""
-                pass
 
         assert "keybinding" in str(exc_info.value).lower()
 

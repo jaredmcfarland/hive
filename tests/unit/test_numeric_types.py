@@ -1,8 +1,8 @@
 """Test domain-specific numeric refinement types."""
 
-import pytest
 from beartype import beartype
 from beartype.roar import BeartypeCallHintParamViolation
+import pytest
 
 
 class TestPort:

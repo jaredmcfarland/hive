@@ -1,7 +1,7 @@
 """Unit tests for OutputFormatter (T044, T045)."""
 
-import json
 from io import StringIO
+import json
 from unittest.mock import patch
 
 

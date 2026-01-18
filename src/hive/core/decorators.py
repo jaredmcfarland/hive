@@ -4,8 +4,10 @@ These decorators register functions and classes with the application registry
 at import time, enabling automatic generation of CLI, TUI, and other interfaces.
 """
 
-import inspect
+from __future__ import annotations
+
 from collections.abc import Callable
+import inspect
 from typing import Any, TypeVar, get_type_hints
 
 from hive.core.types import (
