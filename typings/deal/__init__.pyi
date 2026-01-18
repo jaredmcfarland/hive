@@ -12,32 +12,27 @@ def pre(
     message: str | None = None,
     exception: type[Exception] | Exception | None = None,
 ) -> Callable[[_C], _C]: ...
-
 def post(
     validator: Callable[..., bool],
     *,
     message: str | None = None,
     exception: type[Exception] | Exception | None = None,
 ) -> Callable[[_C], _C]: ...
-
 def ensure(
     validator: Callable[..., bool],
     *,
     message: str | None = None,
     exception: type[Exception] | Exception | None = None,
 ) -> Callable[[_C], _C]: ...
-
 def inv(
     validator: Callable[[_T], bool],
     *,
     message: str | None = None,
     exception: type[Exception] | Exception | None = None,
 ) -> Callable[[type[_T]], type[_T]]: ...
-
 def raises(
     *exceptions: type[Exception],
 ) -> Callable[[_C], _C]: ...
-
 def reason(
     event: type[Exception],
     validator: Callable[..., bool],
