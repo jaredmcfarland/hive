@@ -226,6 +226,7 @@ class TestOutputFormatterTable:
 
         assert "test" in output.lower() or "name" in output.lower()
 
+
 class TestOutputFormatterCSV:
     """Tests for OutputFormatter CSV mode."""
 
@@ -295,6 +296,7 @@ class TestOutputFormatterCSV:
 
         # Empty list should produce no output
         assert output == ""
+
 
 class TestOutputFormatterQuiet:
     """Tests for OutputFormatter quiet mode."""
