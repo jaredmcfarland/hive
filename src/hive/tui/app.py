@@ -6,15 +6,17 @@ the application registry.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from textual import on
 from textual.app import App
 from textual.binding import Binding, BindingType
+from textual.command import Provider
 from textual.events import Resize
 
-from hive.tui.widgets.modal import ParameterModal, ParameterSubmitted
-from hive.tui.widgets.palette import CommandPalette, CommandSelected
+from hive.tui.commands import HiveCommandProvider
+from hive.tui.widgets.modal import ParameterSubmitted
 
 if TYPE_CHECKING:
     from textual.screen import Screen
@@ -31,20 +33,21 @@ class HiveApp(App[None]):
     """Generated Textual application from Hive registry.
 
     Automatically installs screens and binds keybindings from the
-    application registry.
+    application registry. Uses Textual's built-in command palette (Ctrl+P)
+    with HiveCommandProvider for command discovery.
 
     Attributes:
         BINDINGS: List of key bindings for navigation.
+        COMMANDS: Command providers for the command palette.
         _hive_registry: The application registry.
         _default_screen: Name of the default screen.
     """
 
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("q", "quit", "Quit", priority=True),
-        Binding("ctrl+p", "open_command_palette", "Command Palette", priority=True),
-        Binding("escape", "close_command_palette", "Close Palette", show=False, priority=True),
-        Binding("enter", "palette_select", "Select", show=False, priority=True),
     ]
+
+    COMMANDS: ClassVar[set[type[Provider] | Callable[[], type[Provider]]]] = {HiveCommandProvider}
 
     CSS: ClassVar[str] = """
     Screen {
@@ -77,7 +80,6 @@ class HiveApp(App[None]):
         self._screen_classes: dict[str, type[Screen[Any]]] = {}
         self._css_path = css_path
         self._dynamic_bindings: list[BindingType] = []
-        self._command_palette: CommandPalette | None = None
         self._min_width = min_width
         self._min_height = min_height
         self._size_warning_shown = False
@@ -117,17 +119,15 @@ class HiveApp(App[None]):
 
     @override
     def compose(self) -> Any:
-        """Compose the application layout including command palette.
+        """Compose the application layout.
 
         Returns:
-            Widget composition.
+            Empty generator - screens are pushed dynamically.
         """
-        # Mount command palette at app level so it's available on all screens
-        self._command_palette = CommandPalette(
-            registry=self._hive_registry,
-            widget_id="command-palette",
-        )
-        yield self._command_palette
+        # Screens are pushed dynamically via on_mount
+        # Use empty generator pattern for type checking
+        if False:
+            yield
 
     def on_mount(self) -> None:
         """Called when app is mounted. Pushes default screen."""
@@ -238,53 +238,6 @@ class HiveApp(App[None]):
                 return navigate_action
 
         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
-
-    async def action_open_command_palette(self) -> None:
-        """Open the command palette."""
-        if self._command_palette:
-            await self._command_palette.open()
-
-    def action_close_command_palette(self) -> None:
-        """Close the command palette if open, or dismiss modal if active."""
-        # First check if we're on a ParameterModal - let it handle escape
-        if isinstance(self.screen, ParameterModal):
-            self.screen.action_cancel()
-            return
-
-        # Otherwise close the command palette if open
-        if self._command_palette and self._command_palette.display:
-            self._command_palette.action_close_palette()
-
-    def action_palette_select(self) -> None:
-        """Select command from palette if open, or submit modal if active."""
-        # First check if we're on a ParameterModal - let it handle enter
-        if isinstance(self.screen, ParameterModal):
-            self.screen.action_submit()
-            return
-
-        # Otherwise select from the palette if open
-        if self._command_palette and self._command_palette.display:
-            self._command_palette.action_select_command()
-
-    @on(CommandSelected)
-    async def _on_command_selected(self, event: CommandSelected) -> None:
-        """Handle command selection from palette.
-
-        Args:
-            event: Command selection event.
-        """
-        command = event.command
-        # Push parameter modal for the selected command
-        await self._show_parameter_modal(command)
-
-    async def _show_parameter_modal(self, command: CommandRegistration) -> None:
-        """Show the parameter modal for a command.
-
-        Args:
-            command: Command registration to show parameters for.
-        """
-        modal = ParameterModal(command)
-        await self.push_screen(modal)
 
     @on(ParameterSubmitted)
     async def _on_parameters_submitted(self, event: ParameterSubmitted) -> None:
