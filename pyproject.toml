@@ -278,7 +278,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 "src/hive/testing/mocks.py" = ["PYI034", "PYI036"]  # Async context manager patterns
 "src/hive/testing/strategies.py" = ["BLE001", "C901"]  # Complex type strategy
 # Type stubs
-"typings/**/*.pyi" = ["PYI021", "N818"]  # Stub files have different rules
+"typings/**/*.pyi" = ["PYI021", "UP047", "N818"]  # Stub files have different rules
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
