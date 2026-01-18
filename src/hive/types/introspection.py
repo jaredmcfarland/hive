@@ -207,8 +207,8 @@ def _extract_numeric_bounds(
 
         if min_val is not None or max_val is not None:
             return (min_val, max_val)
-    except Exception:
-        # Bounds extraction is best-effort; source may be unavailable or unparseable
+    except Exception:  # nosec B110
+        # Bounds extraction is best-effort; source may be unavailable or unparsable
         pass
 
     return None
@@ -225,7 +225,7 @@ def _extract_string_pattern(validator: Any) -> str | None:
         match = re.search(r"re\.match\(r?['\"](.+?)['\"]", source)
         if match:
             return match.group(1)
-    except Exception:
+    except Exception:  # nosec B110
         # Pattern extraction is best-effort; malformed source or complex validators may fail
         pass
 
@@ -264,7 +264,7 @@ def _extract_length_constraints(
 
         if min_len is not None or max_len is not None:
             return (min_len, max_len)
-    except Exception:
+    except Exception:  # nosec B110
         # Length extraction is optional; fall back to no length constraints on failure
         pass
 
