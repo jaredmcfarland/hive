@@ -168,7 +168,6 @@ class StrictBase(BaseModel):
         frozen=True,           # Immutable after creation
         extra="forbid",        # No undeclared fields
         validate_default=True, # Validate default values
-        use_enum_values=True,  # Serialize enums to values
     )
 ```
 
@@ -575,10 +574,10 @@ repos:
 
   # Security
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.10
+    rev: 1.8.2
     hooks:
       - id: bandit
-        args: [-c, pyproject.toml]
+        args: [-c, pyproject.toml, -r, src/]
         additional_dependencies: ["bandit[toml]"]
 
 # CI configuration

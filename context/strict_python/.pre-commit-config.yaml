@@ -12,7 +12,7 @@ repos:
   # Ruff - Linting and Formatting (fast, comprehensive)
   # ---------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.0
+    rev: v0.8.6
     hooks:
       - id: ruff
         name: ruff (lint)
@@ -24,7 +24,7 @@ repos:
   # Pyright - Static Type Checking
   # ---------------------------------------------------------------------------
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.390
+    rev: v1.1.391
     hooks:
       - id: pyright
         name: pyright (typecheck)
@@ -98,7 +98,7 @@ repos:
   # Security - Bandit
   # ---------------------------------------------------------------------------
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.10
+    rev: 1.8.2
     hooks:
       - id: bandit
         name: bandit (security)
@@ -109,7 +109,7 @@ repos:
   # Validate pyproject.toml
   # ---------------------------------------------------------------------------
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.21
+    rev: v0.23
     hooks:
       - id: validate-pyproject
         name: validate pyproject.toml
@@ -118,7 +118,7 @@ repos:
   # Typos - Spell Checking for Code
   # ---------------------------------------------------------------------------
   - repo: https://github.com/crate-ci/typos
-    rev: v1.27.3
+    rev: v1.29.4
     hooks:
       - id: typos
         name: typos (spell check)

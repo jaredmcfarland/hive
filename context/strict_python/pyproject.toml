@@ -150,7 +150,6 @@ reportImplicitStringConcatenation = "warning"
 reportImportCycles = "warning"
 reportPropertyTypeMismatch = "error"
 reportShadowedImports = "error"
-reportUninitializedInstanceVariable = "error"
 reportUnknownArgumentType = "error"
 reportUnknownLambdaType = "error"
 reportUnknownMemberType = "error"
@@ -229,8 +228,6 @@ ignore = [
     "D107",    # Missing docstring in __init__ (redundant with class docstring)
 
     # ----- Overly pedantic for our use case -----
-    "ANN101",  # Missing type annotation for self (deprecated)
-    "ANN102",  # Missing type annotation for cls (deprecated)
     "ANN401",  # Dynamically typed expressions (Any) - we allow explicit Any sparingly
     "TD002",   # Missing author in TODO
     "TD003",   # Missing issue link in TODO
@@ -286,6 +283,7 @@ strict = true
 runtime-evaluated-base-classes = [
     "pydantic.BaseModel",
     "sqlalchemy.orm.DeclarativeBase",
+    "pydantic_settings.BaseSettings",
 ]
 
 [tool.ruff.lint.pylint]

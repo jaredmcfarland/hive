@@ -188,6 +188,7 @@ class TextMessage(BaseModel):
 class ImageMessage(BaseModel):
     type: Literal["image"] = "image"
     url: HttpUrl
+    alt_text: str = ""
 
 Message = TextMessage | ImageMessage  # All variants visible
 
