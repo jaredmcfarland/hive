@@ -90,7 +90,7 @@ class ExecutionContext:
         return self._output_format
 
     @property
-    def interactive(self) -> bool:
+    def interactive(self) -> bool:  # pragma: no cover
         """True if TTY is attached."""
         import sys
 
