@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 from hive.generators.schema import python_type_to_json_schema
 from hive.spec.models import MCPServerConfig, MCPTool, MCPToolSchema
+from hive.types.introspection import get_base_type
 
 if TYPE_CHECKING:
     from hive.app import App
@@ -189,7 +190,7 @@ class MCPGenerator:
         # Build function signature string with explicit parameters
         param_parts = []
         for p in params:
-            base_type = self._get_base_type(p.type)
+            base_type = get_base_type(p.type)
             type_name = base_type.__name__ if hasattr(base_type, "__name__") else "Any"
             if p.has_default:
                 param_parts.append(f"{p.name}: {type_name} = _defaults['{p.name}']")
@@ -227,26 +228,6 @@ async def tool_handler({params_str}) -> Any:
 
         # Register with FastMCP
         mcp.tool(name=tool.name, description=tool.description)(handler)
-
-    def _get_base_type(self, param_type: Any) -> type:
-        """Extract base type from Annotated or return type as-is.
-
-        For `Annotated[int, Is[...]]`, returns `int`.
-        For plain types like `str`, returns `str`.
-
-        Args:
-            param_type: A type annotation, possibly Annotated.
-
-        Returns:
-            The base type without Annotated wrapper.
-        """
-        from typing import Annotated, get_args, get_origin  # noqa: PLC0415
-
-        origin = get_origin(param_type)
-        if origin is Annotated:
-            args = get_args(param_type)
-            return args[0] if args else param_type
-        return param_type
 
 
 def format_mcp_error(error: Exception) -> dict[str, Any]:

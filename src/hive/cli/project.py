@@ -13,6 +13,7 @@ Usage:
 
 from __future__ import annotations
 
+import keyword
 from pathlib import Path
 import shutil
 import subprocess  # nosec B404
@@ -237,8 +238,6 @@ def _normalize_project_name(name: str) -> str:
         raise ValueError(msg)
 
     # Check it's not a Python keyword
-    import keyword  # noqa: PLC0415
-
     if keyword.iskeyword(normalized):
         msg = f"Invalid project name: '{name}' is a Python keyword."
         raise ValueError(msg)

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from hive.generators.schema import python_type_to_json_schema
 from hive.spec.models import RESTAPIConfig, RESTEndpoint
+from hive.types.introspection import get_base_type
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -69,27 +70,6 @@ def format_execution_error(
         result["traceback"] = traceback.format_exc()
 
     return result
-
-
-def _get_base_type(param_type: Any) -> type:
-    """Extract base type from Annotated or return type as-is.
-
-    For `Annotated[int, Is[...]]`, returns `int`.
-    For plain types like `str`, returns `str`.
-
-    Args:
-        param_type: A type annotation, possibly Annotated.
-
-    Returns:
-        The base type without Annotated wrapper.
-    """
-    from typing import Annotated, get_args, get_origin  # noqa: PLC0415
-
-    origin = get_origin(param_type)
-    if origin is Annotated:
-        args = get_args(param_type)
-        return args[0] if args else param_type
-    return param_type
 
 
 AuthType = Literal["none", "api_key", "bearer", "basic"]
@@ -523,7 +503,7 @@ class RESTGenerator:
         # Build parameter code for the function signature
         param_code_parts: list[str] = []
         for p in param_list:
-            base_type = _get_base_type(p.type)
+            base_type = get_base_type(p.type)
             type_name = base_type.__name__ if hasattr(base_type, "__name__") else "str"
             if p.has_default:
                 default_repr = repr(p.default)

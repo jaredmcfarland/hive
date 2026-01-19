@@ -38,6 +38,32 @@ class ConstraintInfo:
     """Maximum length for string/collection types."""
 
 
+def get_base_type(type_hint: Any) -> type:
+    """Extract base type from Annotated or return type as-is.
+
+    For `Annotated[int, Is[...]]`, returns `int`.
+    For plain types like `str`, returns `str`.
+
+    Args:
+        type_hint: A type annotation, possibly Annotated.
+
+    Returns:
+        The base type without Annotated wrapper.
+
+    Example:
+        >>> from typing import Annotated
+        >>> get_base_type(Annotated[int, "constraint"])
+        <class 'int'>
+        >>> get_base_type(str)
+        <class 'str'>
+    """
+    origin = get_origin(type_hint)
+    if origin is Annotated:
+        args = get_args(type_hint)
+        return args[0] if args else type_hint
+    return type_hint
+
+
 def extract_constraints(type_hint: Any) -> ConstraintInfo | None:
     """
     Extract constraint metadata from a type hint.
