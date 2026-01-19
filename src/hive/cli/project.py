@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from typing import Annotated, Any
 
 from rich.console import Console
@@ -334,7 +334,7 @@ def build_project(
     elif "sdist" in formats and "wheel" not in formats:
         cmd.append("--sdist")
 
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(  # noqa: S603  # nosec B603
         cmd,
         cwd=project_path,
         capture_output=True,
@@ -399,7 +399,7 @@ def publish_project(
     if repository == "testpypi":
         cmd.extend(["--publish-url", "https://test.pypi.org/legacy/"])
 
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(  # noqa: S603  # nosec B603
         cmd,
         cwd=project_path,
         capture_output=True,

@@ -540,7 +540,7 @@ async def query_handler({params_str}) -> Any:
         }
 
         # Execute to create the function
-        exec(func_code, namespace)  # noqa: S102
+        exec(func_code, namespace)  # noqa: S102  # nosec B102
         handler = namespace["query_handler"]
 
         # Register the endpoint
