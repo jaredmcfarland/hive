@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
     from hive.core.registry import ApplicationRegistry
     from hive.core.types import CommandRegistration
+    from hive.runtime.context import ExecutionContext
 
 # Minimum terminal size for proper widget display (SC-006)
 MIN_TERMINAL_WIDTH = 80
@@ -59,6 +60,7 @@ class HiveApp(App[None]):
         self,
         registry: ApplicationRegistry,
         *,
+        execution_context: ExecutionContext | None = None,
         title: str = "Hive Application",
         css_path: str | None = None,
         min_width: int = MIN_TERMINAL_WIDTH,
@@ -68,6 +70,7 @@ class HiveApp(App[None]):
 
         Args:
             registry: The application registry containing screens.
+            execution_context: Optional execution context for service/db access.
             title: Application title (shown in header).
             css_path: Optional path to CSS file.
             min_width: Minimum terminal width (default 80).
@@ -75,6 +78,7 @@ class HiveApp(App[None]):
         """
         super().__init__()
         self._hive_registry = registry
+        self._execution_context = execution_context
         self.title = title
         self._default_screen: str | None = None
         self._screen_classes: dict[str, type[Screen[Any]]] = {}
@@ -192,6 +196,9 @@ class HiveApp(App[None]):
         Raises:
             KeyError: If screen not found.
         """
+        # Import here to avoid circular dependency
+        from hive.tui.screens import HiveScreen, ScreenContext  # noqa: PLC0415
+
         screen_cls = self._screen_classes[screen_name]
         screen = screen_cls()
 
@@ -204,6 +211,12 @@ class HiveApp(App[None]):
             # Set registry for query execution
             if hasattr(screen, "_registry"):
                 screen._registry = self._hive_registry  # type: ignore[attr-defined]  # noqa: SLF001
+
+        # Initialize screen context if execution context is available
+        # (intentional internal access - _set_context is designed to be called by HiveApp)
+        if isinstance(screen, HiveScreen) and self._execution_context is not None:
+            ctx = ScreenContext(self._execution_context, self, screen)
+            screen._set_context(ctx)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
         return screen
 

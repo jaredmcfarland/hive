@@ -163,6 +163,7 @@ class HiveScreen[T](Screen[T]):
         super().__init__(name=name, id=id, classes=classes)
         self._ctx: ScreenContext | None = None
         self._data_worker: Worker[Any] | None = None
+        self._query_executor: QueryBindingExecutor | None = None
 
     @property
     def ctx(self) -> ScreenContext:
@@ -217,8 +218,10 @@ class HiveScreen[T](Screen[T]):
                 self.post_message(DataLoaded(self.data))
                 return
 
-            # Create executor for this load
-            executor = QueryBindingExecutor(self._registry)
+            # Reuse executor to preserve cache across refreshes
+            if self._query_executor is None:
+                self._query_executor = QueryBindingExecutor(self._registry)
+            executor = self._query_executor
 
             # Load the first query (primary binding)
             # Future: support multiple query bindings
