@@ -1,0 +1,342 @@
+# Project Tooling CLI Contract
+# Branch: 003-spec-distribution
+# Milestone: 3.4 - Project Tooling (P4)
+
+openapi: "3.1.0"
+info:
+  title: Hive Project Tooling CLI
+  version: "1.0.0"
+  description: |
+    Contract for CLI project management commands.
+    These are CLI-only operations, not REST endpoints.
+
+paths:
+  /cli/new:
+    post:
+      operationId: project_new
+      summary: Create new Hive project
+      description: |
+        Scaffold a new Hive project with standard structure,
+        configuration, and example code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProjectRequest"
+      responses:
+        "200":
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewProjectResult"
+        "400":
+          description: Invalid project name or options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Directory already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cli/dev:
+    post:
+      operationId: project_dev
+      summary: Start development server
+      description: |
+        Start development server with hot reload for
+        all interfaces (CLI, TUI, REST, MCP).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DevRequest"
+      responses:
+        "200":
+          description: Development server started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DevStatus"
+
+  /cli/build:
+    post:
+      operationId: project_build
+      summary: Build distributable package
+      description: |
+        Build a distributable package for deployment.
+        Creates wheel and/or sdist in dist/ directory.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildRequest"
+      responses:
+        "200":
+          description: Build completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildResult"
+        "400":
+          description: Build configuration error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cli/publish:
+    post:
+      operationId: project_publish
+      summary: Publish package to registry
+      description: |
+        Publish the built package to PyPI or a
+        configured package registry.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublishRequest"
+      responses:
+        "200":
+          description: Package published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResult"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Version already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    NewProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          pattern: "^[a-z][a-z0-9_-]*$"
+          minLength: 1
+          maxLength: 100
+          description: Project name (valid Python package name)
+        path:
+          type: string
+          description: "Directory to create project in (default: current)"
+        template:
+          type: string
+          default: default
+          description: Project template to use
+        description:
+          type: string
+          description: Project description
+        author:
+          type: string
+          description: Author name
+        email:
+          type: string
+          format: email
+          description: Author email
+        python_version:
+          type: string
+          default: "3.12"
+          description: Minimum Python version
+        features:
+          type: array
+          items:
+            type: string
+            enum: [tui, mcp, rest, all]
+          default: []
+          description: Optional features to enable
+        force:
+          type: boolean
+          default: false
+          description: Overwrite existing directory
+
+    NewProjectResult:
+      type: object
+      required:
+        - path
+        - files_created
+      properties:
+        path:
+          type: string
+          description: Absolute path to created project
+        files_created:
+          type: array
+          items:
+            type: string
+          description: List of created files
+        next_steps:
+          type: array
+          items:
+            type: string
+          description: Suggested next commands
+
+    DevRequest:
+      type: object
+      properties:
+        interfaces:
+          type: array
+          items:
+            type: string
+            enum: [cli, tui, rest, mcp]
+          default: [cli]
+          description: Interfaces to enable
+        reload:
+          type: boolean
+          default: true
+          description: Enable hot reload
+        rest_port:
+          type: integer
+          default: 8000
+        mcp_port:
+          type: integer
+          default: 8080
+        log_level:
+          type: string
+          enum: [debug, info, warning, error]
+          default: info
+
+    DevStatus:
+      type: object
+      required:
+        - status
+        - interfaces
+      properties:
+        status:
+          type: string
+          enum: [running, stopped]
+        interfaces:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [running, stopped, disabled]
+              url:
+                type: string
+        reload_enabled:
+          type: boolean
+        watch_paths:
+          type: array
+          items:
+            type: string
+
+    BuildRequest:
+      type: object
+      properties:
+        format:
+          type: array
+          items:
+            type: string
+            enum: [wheel, sdist]
+          default: [wheel]
+          description: Build output formats
+        clean:
+          type: boolean
+          default: false
+          description: Clean dist/ before building
+        verify:
+          type: boolean
+          default: true
+          description: Run checks before building
+
+    BuildResult:
+      type: object
+      required:
+        - artifacts
+      properties:
+        artifacts:
+          type: array
+          items:
+            type: object
+            required:
+              - path
+              - format
+              - size
+            properties:
+              path:
+                type: string
+              format:
+                type: string
+                enum: [wheel, sdist]
+              size:
+                type: integer
+                description: File size in bytes
+        version:
+          type: string
+          description: Package version
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [passed, failed, skipped]
+
+    PublishRequest:
+      type: object
+      properties:
+        repository:
+          type: string
+          default: pypi
+          description: Target repository (pypi, testpypi, or custom URL)
+        token:
+          type: string
+          description: API token (defaults to env var)
+        skip_existing:
+          type: boolean
+          default: false
+          description: Skip if version already exists
+        dry_run:
+          type: boolean
+          default: false
+          description: Simulate without uploading
+
+    PublishResult:
+      type: object
+      required:
+        - repository
+        - package
+        - version
+      properties:
+        repository:
+          type: string
+        package:
+          type: string
+        version:
+          type: string
+        url:
+          type: string
+          description: Package URL on repository
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

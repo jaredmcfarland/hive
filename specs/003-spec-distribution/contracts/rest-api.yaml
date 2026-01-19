@@ -1,0 +1,324 @@
+# REST API Generation Contract
+# Branch: 003-spec-distribution
+# Milestone: 3.3 - REST API Generation (P3)
+
+openapi: "3.1.0"
+info:
+  title: Hive REST API Generation
+  version: "1.0.0"
+  description: |
+    Contract for REST API generation from Hive commands and queries.
+    This defines the structure of generated endpoints.
+
+servers:
+  - url: "http://localhost:8000"
+    description: Default development server
+
+paths:
+  # CLI command to start REST server
+  /cli/serve:
+    post:
+      operationId: rest_serve
+      summary: Start REST API server
+      description: |
+        Start a REST API server that exposes Hive commands
+        and queries as HTTP endpoints.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServeRequest"
+      responses:
+        "200":
+          description: Server started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerStatus"
+
+  # Generated endpoint patterns
+  /commands/{command_name}:
+    post:
+      operationId: execute_command
+      summary: Execute a command
+      description: |
+        Template for generated command endpoints.
+        Each command becomes POST /commands/{name}.
+      parameters:
+        - name: command_name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Command parameters (generated from signature)
+      responses:
+        "200":
+          description: Command executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Command return value
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "500":
+          description: Command execution error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionError"
+
+  /queries/{query_name}:
+    get:
+      operationId: execute_query
+      summary: Execute a query
+      description: |
+        Template for generated query endpoints.
+        Each query becomes GET /queries/{name}.
+        Parameters passed as query string.
+      parameters:
+        - name: query_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Query executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Query return value
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "500":
+          description: Query execution error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionError"
+
+  /health:
+    get:
+      operationId: health_check
+      summary: Health check endpoint
+      description: Always included for monitoring
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /spec:
+    get:
+      operationId: get_specification
+      summary: Get application specification
+      description: Returns the full specification as JSON
+      responses:
+        "200":
+          description: Specification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Specification"
+
+components:
+  schemas:
+    ServeRequest:
+      type: object
+      properties:
+        host:
+          type: string
+          default: "127.0.0.1"
+          description: Host to bind
+        port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          default: 8000
+          description: Port to listen on
+        reload:
+          type: boolean
+          default: false
+          description: Enable hot reload on code changes
+        workers:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of worker processes
+        auth:
+          $ref: "#/components/schemas/AuthConfig"
+
+    AuthConfig:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [none, api_key, bearer, basic]
+          default: none
+        api_key_header:
+          type: string
+          default: "X-API-Key"
+          description: Header name for API key auth
+        api_key_env:
+          type: string
+          default: "HIVE_API_KEY"
+          description: Environment variable for API key
+
+    ServerStatus:
+      type: object
+      required:
+        - status
+        - host
+        - port
+        - endpoints
+      properties:
+        status:
+          type: string
+          enum: [running, stopped]
+        host:
+          type: string
+        port:
+          type: integer
+        endpoints:
+          type: object
+          properties:
+            commands:
+              type: integer
+              description: Number of command endpoints
+            queries:
+              type: integer
+              description: Number of query endpoints
+        docs_url:
+          type: string
+          description: OpenAPI docs URL
+        reload_enabled:
+          type: boolean
+
+    HealthStatus:
+      type: object
+      required:
+        - status
+        - version
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime_seconds:
+          type: number
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [pass, warn, fail]
+              message:
+                type: string
+
+    Specification:
+      type: object
+      description: See spec-export.yaml for full schema
+
+    ValidationError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            required:
+              - loc
+              - msg
+              - type
+            properties:
+              loc:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+                description: Path to error location
+              msg:
+                type: string
+                description: Error message
+              type:
+                type: string
+                description: Error type code
+              ctx:
+                type: object
+                description: Additional context
+
+    AuthError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          default: "Not authenticated"
+        www_authenticate:
+          type: string
+          description: WWW-Authenticate header value
+
+    ExecutionError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+        error_type:
+          type: string
+          description: Exception class name
+        traceback:
+          type: string
+          description: Stack trace (only in debug mode)
+
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    bearerAuth:
+      type: http
+      scheme: bearer
+    basicAuth:
+      type: http
+      scheme: basic

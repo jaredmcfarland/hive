@@ -45,13 +45,23 @@ uv run vulture src/ --min-confidence 80
 uv run pre-commit install        # Install hooks
 uv run pre-commit run --all-files # Run all hooks
 
-# Hive CLI (after implementation)
-uv run hive new <name>           # Create new project
+# Hive CLI
+uv run hive new <name>           # Create new project (scaffold)
+uv run hive new <name> --features tui,mcp,rest  # With optional features
 uv run hive dev                  # Development server with hot reload
-uv run hive build                # Build distribution
-uv run hive db migrate <msg>     # Generate migration
-uv run hive db upgrade           # Apply migrations
+uv run hive dev --interfaces cli,rest,mcp  # Multiple interfaces
+uv run hive build                # Build distribution (wraps uv build)
+uv run hive publish              # Publish to PyPI (wraps uv publish)
 uv run hive spec export          # Export specification as JSON Schema
+uv run hive spec export --format toml  # Export as TOML
+uv run hive spec export -o spec.json   # Export to file
+uv run hive spec diff v1.json v2.json  # Compare specifications
+uv run hive spec diff v1.json v2.json --fail-on-breaking  # CI mode
+uv run hive mcp serve            # Start MCP server (stdio transport)
+uv run hive mcp serve --transport sse --port 8080  # SSE transport
+uv run hive serve                # Start REST API server
+uv run hive serve --port 8000 --reload  # With hot reload
+uv run hive serve --auth api_key # With API key authentication
 ```
 
 ## Architecture
@@ -102,8 +112,23 @@ src/hive/
 ├── testing/            # Test utilities (hypothesis-based)
 │   ├── strategies.py   # strategy_for_type() auto-generation
 │   └── mocks.py        # MockExecutionContext
+├── cli/                # CLI commands (hive <cmd>)
+│   ├── main.py         # CLI entrypoint and subcommand registration
+│   ├── spec.py         # hive spec export/diff commands
+│   ├── mcp.py          # hive mcp serve command
+│   ├── serve.py        # hive serve (REST API) command
+│   └── project.py      # hive new/dev/build/publish commands
+├── spec/               # Specification export and diffing
+│   ├── models.py       # Specification, CommandSchema, etc.
+│   ├── export.py       # build_specification(), export_specification()
+│   ├── diff.py         # diff_specifications() for breaking changes
+│   └── constraints.py  # Parameter constraint extraction
 ├── generators/         # Interface generators
-│   └── cli.py          # Typer CLI generation
+│   ├── cli.py          # Typer CLI generation
+│   ├── tui.py          # Textual TUI generation
+│   ├── mcp.py          # MCPGenerator for MCP server
+│   ├── rest.py         # RESTGenerator for FastAPI
+│   └── schema.py       # JSON Schema generation
 └── runtime/            # Execution context and services
     ├── context.py      # ExecutionContext implementation
     ├── config.py       # Pydantic settings
@@ -147,6 +172,8 @@ Commands receive `ctx` with:
 - hypothesis>=6.100.0 - Property-based testing (dev dependency)
 - Python 3.12+ + Textual (TUI), keyring (credentials), httpx (HTTP client), existing: Typer, Rich, SQLModel, Pydantic (002-tui-services)
 - SQLite via SQLModel (existing infrastructure from Phase 1) (002-tui-services)
+- Python 3.12+ (enables type parameter syntax `class Foo[T]:`) (003-spec-distribution)
+- N/A (this phase generates artifacts, not data) (003-spec-distribution)
 
 ## Development Tools (strict Python standards)
 - **uv** - Fast Python package manager and project tool
@@ -321,6 +348,7 @@ async def test_my_command():
 ```
 
 ## Recent Changes
+- 003-spec-distribution: Added Python 3.12+ (enables type parameter syntax `class Foo[T]:`)
 - 002-tui-services: Added Python 3.12+ + Textual (TUI), keyring (credentials), httpx (HTTP client), existing: Typer, Rich, SQLModel, Pydantic
 - strict-python-tooling: Implemented strict Python development standards
   - Upgraded to Python 3.12+ (enables type parameter syntax)
@@ -329,7 +357,6 @@ async def test_my_command():
   - Added Pyright in strict mode with 30+ additional checks
   - Added GitHub Actions CI pipeline (lint → typecheck → test → docs → security → architecture)
   - Added pre-commit hooks for automated quality gates
-- verification-stack: Complete verification pyramid implementation
   - `hive.types` - 20+ refinement types with beartype validation
   - `hive.contracts` - @requires/@ensures/@invariant decorators wrapping deal
   - `hive.testing` - strategy_for_type() and MockExecutionContext
