@@ -22,6 +22,29 @@ class AppDiscoveryError(Exception):
     """Raised when app discovery fails."""
 
 
+def _get_project_name_from_pyproject(cwd: Path) -> str | None:
+    """Extract project name from pyproject.toml.
+
+    Args:
+        cwd: Directory containing pyproject.toml.
+
+    Returns:
+        Project name or None if not found.
+    """
+    pyproject_path = cwd / "pyproject.toml"
+    if not pyproject_path.exists():
+        return None
+
+    import tomllib  # noqa: PLC0415  # stdlib in Python 3.11+
+
+    try:
+        with pyproject_path.open("rb") as f:
+            data = tomllib.load(f)
+        return data.get("project", {}).get("name")
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+
+
 def discover_app(
     module_names: list[str] | None = None,
     app_attr: str = "app",
@@ -30,11 +53,12 @@ def discover_app(
     """Discover and load the Hive App instance from the current project.
 
     Searches for a Hive App instance by importing common module locations
-    and looking for an 'app' attribute.
+    and looking for an 'app' attribute. Supports the standard scaffolded
+    layout: src/<project>/app.py
 
     Args:
         module_names: List of module names to search for the app.
-            Defaults to ["app", "main", "src.app", "src.main"].
+            Auto-detects from pyproject.toml if not provided.
         app_attr: Attribute name to look for in each module.
             Defaults to "app".
         cwd: Working directory to add to sys.path.
@@ -51,16 +75,35 @@ def discover_app(
         >>> print(app.name)
         myapp
     """
+    if cwd is None:
+        cwd = Path.cwd()
+
+    # Build default module names list
     if module_names is None:
         module_names = ["app", "main", "src.app", "src.main"]
 
-    if cwd is None:
-        cwd = Path.cwd()
+        # Try to discover project name from pyproject.toml for src/<project>/app.py layout
+        project_name = _get_project_name_from_pyproject(cwd)
+        if project_name:
+            # Convert project name to valid Python module name (replace - with _)
+            module_name = project_name.replace("-", "_")
+            module_names.extend(
+                [
+                    f"{module_name}.app",
+                    f"{module_name}.main",
+                ]
+            )
 
     # Add current directory to path for imports
     cwd_str = str(cwd)
     if cwd_str not in sys.path:
         sys.path.insert(0, cwd_str)
+
+    # Also add src/ directory if it exists (for src/<project>/app.py layout)
+    src_dir = cwd / "src"
+    src_dir_str = str(src_dir)
+    if src_dir.is_dir() and src_dir_str not in sys.path:
+        sys.path.insert(0, src_dir_str)
 
     errors: list[str] = []
 

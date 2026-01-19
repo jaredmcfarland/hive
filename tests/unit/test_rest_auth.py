@@ -17,6 +17,7 @@ try:
     del _fastapi  # Only used for availability check
     _fastapi_available = True
 except ImportError:
+    # FastAPI is an optional dependency; REST tests will be skipped when not installed.
     pass
 
 FASTAPI_AVAILABLE: bool = _fastapi_available
