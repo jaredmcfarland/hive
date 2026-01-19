@@ -437,7 +437,7 @@ def create_file_watcher(path: str | Path) -> Any:
     # Filter to only Python files, ignore __pycache__
     return watch(
         path,
-        watch_filter=lambda _change, p: (
+        watch_filter=lambda _, p: (
             p.endswith(".py") and "__pycache__" not in p and ".venv" not in p
         ),
     )

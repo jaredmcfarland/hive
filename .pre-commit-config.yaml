@@ -42,6 +42,13 @@ repos:
           - keyring>=25.0.0
           - httpx>=0.27.0
           - hypothesis>=6.100.0
+          # Optional dependencies for type checking
+          - fastapi>=0.100.0
+          - uvicorn>=0.23.0
+          - watchfiles>=1.0.0
+          - deepdiff>=8.0.0
+          - tomli-w>=1.0.0
+          - fastmcp>=2.0,<3
 
   # ---------------------------------------------------------------------------
   # Interrogate - Docstring Coverage

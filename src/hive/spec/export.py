@@ -102,8 +102,8 @@ def _build_command_schema(cmd_reg: Any) -> CommandSchema:
                 default=param_dict.get("default"),
                 minimum=param_dict.get("minimum"),
                 maximum=param_dict.get("maximum"),
-                min_length=param_dict.get("minLength"),
-                max_length=param_dict.get("maxLength"),
+                min_length=param_dict.get("minLength"),  # pyright: ignore[reportCallIssue]
+                max_length=param_dict.get("maxLength"),  # pyright: ignore[reportCallIssue]
                 pattern=param_dict.get("pattern"),
                 format=param_dict.get("format"),
             )
@@ -149,8 +149,8 @@ def _build_query_schema(query_reg: Any) -> QuerySchema:
                 default=param_dict.get("default"),
                 minimum=param_dict.get("minimum"),
                 maximum=param_dict.get("maximum"),
-                min_length=param_dict.get("minLength"),
-                max_length=param_dict.get("maxLength"),
+                min_length=param_dict.get("minLength"),  # pyright: ignore[reportCallIssue]
+                max_length=param_dict.get("maxLength"),  # pyright: ignore[reportCallIssue]
                 pattern=param_dict.get("pattern"),
                 format=param_dict.get("format"),
             )
@@ -229,7 +229,7 @@ def _type_to_json_schema_type(type_hint: type) -> str:
 
     # Get the base type name
     type_name = getattr(type_hint, "__name__", str(type_hint))
-    return type_map.get(type_hint, type_name)  # type: ignore[arg-type]
+    return type_map.get(type_hint, type_name)
 
 
 def export_specification(

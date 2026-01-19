@@ -181,7 +181,7 @@ class MCPGenerator:
 
         # Create tool function
         @mcp.tool(name=tool.name, description=tool.description)
-        async def tool_handler(**kwargs: Any) -> Any:
+        async def tool_handler(**kwargs: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
             """Execute the command."""
             from hive.runtime.context import ExecutionContext  # noqa: PLC0415
 

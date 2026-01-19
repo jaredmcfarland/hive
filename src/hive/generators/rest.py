@@ -24,12 +24,13 @@ if TYPE_CHECKING:
 # Check for optional FastAPI dependency
 _rest_available = False
 try:
-    import fastapi  # noqa: F401  # pyright: ignore[reportUnusedImport]  # Used for availability check
+    import fastapi  # pyright: ignore[reportUnusedImport]
     import uvicorn
 
     _rest_available = True
 except ImportError:
-    uvicorn = None  # type: ignore[assignment]  # Placeholder when not available
+    fastapi = None
+    uvicorn = None
 
 REST_AVAILABLE: bool = _rest_available
 
@@ -106,7 +107,7 @@ def create_auth_dependency(  # noqa: C901
     if auth_type == "api_key":
 
         async def api_key_auth(
-            api_key: str = Header(alias=api_key_header),
+            api_key: str = Header(alias=api_key_header),  # pyright: ignore[reportCallInDefaultInitializer]
         ) -> str:
             """Validate API key from header."""
             expected_key = os.environ.get(api_key_env, "")
@@ -123,7 +124,7 @@ def create_auth_dependency(  # noqa: C901
         bearer_scheme = HTTPBearer()
 
         async def bearer_auth(
-            credentials: Any = Depends(bearer_scheme),  # noqa: B008
+            credentials: Any = Depends(bearer_scheme),  # noqa: B008  # pyright: ignore[reportCallInDefaultInitializer]
         ) -> str:
             """Validate Bearer token."""
             # In a real implementation, validate the token
@@ -141,7 +142,7 @@ def create_auth_dependency(  # noqa: C901
         basic_scheme = HTTPBasic()
 
         async def basic_auth(
-            credentials: Any = Depends(basic_scheme),  # noqa: B008
+            credentials: Any = Depends(basic_scheme),  # noqa: B008  # pyright: ignore[reportCallInDefaultInitializer]
         ) -> str:
             """Validate Basic auth credentials."""
             # In a real implementation, validate username/password
@@ -335,7 +336,7 @@ class RESTGenerator:
 
         # Add health endpoint
         @fastapi_app.get("/health")
-        async def health_check() -> dict[str, Any]:
+        async def health_check() -> dict[str, Any]:  # pyright: ignore[reportUnusedFunction]
             """Health check endpoint."""
             try:
                 from hive import __version__  # noqa: PLC0415
@@ -349,7 +350,7 @@ class RESTGenerator:
 
         # Add spec endpoint (uses US1 export functionality)
         @fastapi_app.get("/spec")
-        async def get_spec() -> dict[str, Any]:
+        async def get_spec() -> dict[str, Any]:  # pyright: ignore[reportUnusedFunction]
             """Get application specification."""
             import json  # noqa: PLC0415
 
@@ -401,7 +402,7 @@ class RESTGenerator:
         from pydantic import create_model  # noqa: PLC0415
 
         # Build request model from parameters
-        fields: dict[str, tuple[type, Any]] = {}
+        fields: dict[str, Any] = {}
         for param in cmd_reg.parameters:
             if param.name == "ctx":
                 continue
@@ -416,7 +417,7 @@ class RESTGenerator:
                 fields[param.name] = (param_type, ...)
 
         # Create dynamic request model
-        request_model = create_model(  # type: ignore[call-overload]
+        request_model = create_model(
             f"{cmd_reg.name.title().replace('_', '')}Request",
             **fields,
         )
@@ -429,7 +430,7 @@ class RESTGenerator:
         ) -> Callable[..., Any]:
             """Create a command handler with proper closure."""
 
-            async def handler(body: Any = Body(...)) -> Any:  # noqa: B008
+            async def handler(body: Any = Body(...)) -> Any:  # noqa: B008  # pyright: ignore[reportCallInDefaultInitializer]
                 """Execute command."""
                 from pydantic import ValidationError  # noqa: PLC0415
 

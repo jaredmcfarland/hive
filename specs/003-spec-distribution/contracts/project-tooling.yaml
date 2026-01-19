@@ -140,7 +140,7 @@ components:
           description: Project name (valid Python package name)
         path:
           type: string
-          description: Directory to create project in (default: current)
+          description: "Directory to create project in (default: current)"
         template:
           type: string
           default: default
