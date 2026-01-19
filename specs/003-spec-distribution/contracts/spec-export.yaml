@@ -1,0 +1,364 @@
+# Specification Export API Contract
+# Branch: 003-spec-distribution
+# Milestone: 3.1 - Specification Export (P1)
+
+openapi: "3.1.0"
+info:
+  title: Hive Specification Export
+  version: "1.0.0"
+  description: |
+    Internal contract for specification export functionality.
+    These are not REST endpoints but CLI command contracts.
+
+paths:
+  /cli/spec/export:
+    post:
+      operationId: spec_export
+      summary: Export application specification
+      description: |
+        Export the current application's command, query, and entity
+        specifications to JSON Schema or TOML format.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "200":
+          description: Specification exported successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Specification"
+            text/toml:
+              schema:
+                type: string
+                description: TOML-formatted specification
+        "400":
+          description: Invalid export options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cli/spec/diff:
+    post:
+      operationId: spec_diff
+      summary: Compare two specification files
+      description: |
+        Compare two specification files and identify differences,
+        including breaking changes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiffRequest"
+      responses:
+        "200":
+          description: Diff computed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpecificationDiff"
+        "400":
+          description: Invalid specification files
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    ExportRequest:
+      type: object
+      required:
+        - format
+      properties:
+        format:
+          type: string
+          enum: [json, toml]
+          description: Output format
+        output:
+          type: string
+          description: Output file path (stdout if not specified)
+        include_internal:
+          type: boolean
+          default: false
+          description: Include internal/hidden commands
+
+    DiffRequest:
+      type: object
+      required:
+        - v1_path
+        - v2_path
+      properties:
+        v1_path:
+          type: string
+          description: Path to first specification file
+        v2_path:
+          type: string
+          description: Path to second specification file
+        format:
+          type: string
+          enum: [json, text]
+          default: text
+          description: Output format for diff
+
+    Specification:
+      type: object
+      required:
+        - metadata
+        - commands
+        - queries
+        - entities
+      properties:
+        $schema:
+          type: string
+          default: "https://json-schema.org/draft/2020-12/schema"
+        metadata:
+          $ref: "#/components/schemas/SpecificationMetadata"
+        commands:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/CommandSchema"
+        queries:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/QuerySchema"
+        entities:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/EntitySchema"
+        $defs:
+          type: object
+          description: Shared type definitions
+          additionalProperties:
+            type: object
+
+    SpecificationMetadata:
+      type: object
+      required:
+        - name
+        - version
+        - generated_at
+        - hive_version
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+          pattern: "^\\d+\\.\\d+\\.\\d+$"
+        generated_at:
+          type: string
+          format: date-time
+        hive_version:
+          type: string
+
+    CommandSchema:
+      type: object
+      required:
+        - name
+        - parameters
+        - return_type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterSchema"
+        return_type:
+          type: object
+          description: JSON Schema for return type
+        aliases:
+          type: array
+          items:
+            type: string
+        entities:
+          type: array
+          items:
+            type: string
+
+    QuerySchema:
+      type: object
+      required:
+        - name
+        - parameters
+        - return_type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterSchema"
+        return_type:
+          type: object
+        cache_ttl:
+          type: integer
+          minimum: 0
+          description: Cache TTL in seconds
+        entities:
+          type: array
+          items:
+            type: string
+
+    ParameterSchema:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        required:
+          type: boolean
+          default: true
+        default:
+          description: Default value (any type)
+        minimum:
+          type: number
+        maximum:
+          type: number
+        minLength:
+          type: integer
+        maxLength:
+          type: integer
+        pattern:
+          type: string
+        format:
+          type: string
+          enum: [email, uri, date-time, date, uuid]
+
+    EntitySchema:
+      type: object
+      required:
+        - name
+        - table_name
+        - fields
+      properties:
+        name:
+          type: string
+        table_name:
+          type: string
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldSchema"
+        relationships:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelationshipSchema"
+
+    FieldSchema:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        primary_key:
+          type: boolean
+          default: false
+        nullable:
+          type: boolean
+          default: false
+        indexed:
+          type: boolean
+          default: false
+
+    RelationshipSchema:
+      type: object
+      required:
+        - field_name
+        - target_entity
+        - relationship_type
+        - foreign_key
+      properties:
+        field_name:
+          type: string
+        target_entity:
+          type: string
+        relationship_type:
+          type: string
+          enum: [one-to-one, one-to-many, many-to-one]
+        foreign_key:
+          type: string
+
+    SpecificationDiff:
+      type: object
+      required:
+        - v1_version
+        - v2_version
+        - compared_at
+        - changes
+        - breaking_changes
+      properties:
+        v1_version:
+          type: string
+        v2_version:
+          type: string
+        compared_at:
+          type: string
+          format: date-time
+        changes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiffItem"
+        breaking_changes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiffItem"
+        summary:
+          type: string
+          description: Human-readable summary
+
+    DiffItem:
+      type: object
+      required:
+        - path
+        - change_type
+      properties:
+        path:
+          type: string
+          description: JSON path to changed element
+        change_type:
+          type: string
+          enum: [added, removed, modified]
+        old_value:
+          description: Previous value (null for added)
+        new_value:
+          description: New value (null for removed)
+        breaking:
+          type: boolean
+          default: false
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

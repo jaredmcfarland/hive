@@ -1,0 +1,312 @@
+# MCP Server Generation Contract
+# Branch: 003-spec-distribution
+# Milestone: 3.2 - MCP Server Generation (P2)
+
+openapi: "3.1.0"
+info:
+  title: Hive MCP Server Generation
+  version: "1.0.0"
+  description: |
+    Contract for MCP (Model Context Protocol) server generation.
+    Defines how Hive commands are exposed as MCP tools.
+
+paths:
+  /cli/mcp/serve:
+    post:
+      operationId: mcp_serve
+      summary: Start MCP server
+      description: |
+        Start an MCP server that exposes Hive commands as tools
+        for AI agents (Claude, Cursor, etc.).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MCPServeRequest"
+      responses:
+        "200":
+          description: Server started (stdio mode exits on disconnect)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPServerStatus"
+        "400":
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /mcp/tools/list:
+    get:
+      operationId: list_tools
+      summary: List available MCP tools
+      description: |
+        MCP protocol method: tools/list
+        Returns all available tools (generated from commands).
+      responses:
+        "200":
+          description: Tool list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPToolList"
+
+  /mcp/tools/call:
+    post:
+      operationId: call_tool
+      summary: Execute an MCP tool
+      description: |
+        MCP protocol method: tools/call
+        Executes a Hive command via MCP.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MCPToolCall"
+      responses:
+        "200":
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPToolResult"
+        "400":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPError"
+        "500":
+          description: Tool execution error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPError"
+
+components:
+  schemas:
+    MCPServeRequest:
+      type: object
+      properties:
+        transport:
+          type: string
+          enum: [stdio, sse]
+          default: stdio
+          description: |
+            Transport protocol:
+            - stdio: Standard input/output (subprocess integration)
+            - sse: Server-Sent Events (network access)
+        host:
+          type: string
+          default: "127.0.0.1"
+          description: Host to bind (SSE only)
+        port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          default: 8080
+          description: Port to listen on (SSE only)
+        include_queries:
+          type: boolean
+          default: false
+          description: Also expose queries as tools
+
+    MCPServerStatus:
+      type: object
+      required:
+        - status
+        - transport
+        - tools_count
+      properties:
+        status:
+          type: string
+          enum: [running, stopped]
+        transport:
+          type: string
+          enum: [stdio, sse]
+        host:
+          type: string
+        port:
+          type: integer
+        tools_count:
+          type: integer
+          description: Number of exposed tools
+        server_info:
+          $ref: "#/components/schemas/MCPServerInfo"
+
+    MCPServerInfo:
+      type: object
+      required:
+        - name
+        - version
+      properties:
+        name:
+          type: string
+          description: Application name
+        version:
+          type: string
+          description: Application version
+        protocol_version:
+          type: string
+          default: "2024-11-05"
+          description: MCP protocol version
+
+    MCPToolList:
+      type: object
+      required:
+        - tools
+      properties:
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/MCPTool"
+
+    MCPTool:
+      type: object
+      required:
+        - name
+        - description
+        - inputSchema
+      properties:
+        name:
+          type: string
+          description: Tool name (matches command name)
+        description:
+          type: string
+          description: From command docstring
+        inputSchema:
+          $ref: "#/components/schemas/MCPInputSchema"
+
+    MCPInputSchema:
+      type: object
+      required:
+        - type
+        - properties
+      properties:
+        type:
+          type: string
+          const: object
+        properties:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/MCPPropertySchema"
+        required:
+          type: array
+          items:
+            type: string
+          description: Required parameter names
+
+    MCPPropertySchema:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [string, number, integer, boolean, array, object]
+        description:
+          type: string
+        default:
+          description: Default value
+        enum:
+          type: array
+          description: Allowed values
+        minimum:
+          type: number
+        maximum:
+          type: number
+        minLength:
+          type: integer
+        maxLength:
+          type: integer
+        pattern:
+          type: string
+        format:
+          type: string
+        items:
+          type: object
+          description: Array item schema
+
+    MCPToolCall:
+      type: object
+      required:
+        - name
+        - arguments
+      properties:
+        name:
+          type: string
+          description: Tool name to execute
+        arguments:
+          type: object
+          description: Tool parameters
+
+    MCPToolResult:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/MCPContent"
+        isError:
+          type: boolean
+          default: false
+
+    MCPContent:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [text, image, resource]
+        text:
+          type: string
+          description: Text content (for type=text)
+        data:
+          type: string
+          description: Base64 data (for type=image)
+        mimeType:
+          type: string
+        uri:
+          type: string
+          description: Resource URI (for type=resource)
+
+    MCPError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: Error code per MCP spec
+        message:
+          type: string
+        data:
+          type: object
+          description: Additional error context
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+# MCP Error Codes Reference
+# -32700: Parse error
+# -32600: Invalid request
+# -32601: Method not found
+# -32602: Invalid params
+# -32603: Internal error

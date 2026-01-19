@@ -48,9 +48,25 @@ dependencies = [
     "textual>=0.50.0",
     "keyring>=25.0.0",
     "httpx>=0.27.0",
+    # Specification and distribution (Phase 3)
+    "deepdiff>=8.0.0",
+    "watchfiles>=1.0.0",
+    "tomli-w>=1.0.0",
 ]
 
+[project.scripts]
+hive = "hive.cli.main:cli"
+
 [project.optional-dependencies]
+mcp = [
+    # MCP server generation - optional
+    "fastmcp>=2.0,<3",
+]
+rest = [
+    # REST API generation - optional
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+]
 dev = [
     # Static analysis
     "pyright>=1.1.390",
