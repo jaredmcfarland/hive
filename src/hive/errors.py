@@ -41,6 +41,25 @@ class ConfigurationError(HiveError):
     exit_code = 78
 
 
+class CredentialError(HiveError):
+    """Raised when credential resolution fails.
+
+    This error is raised when required credentials cannot be found
+    via keyring, environment variables, or interactive prompt.
+
+    Security note: Credential values MUST NOT appear in error messages
+    or stack traces.
+
+    Example:
+        try:
+            client = ctx.services.github_client
+        except CredentialError:
+            console.print("Please run: hive credentials set github")
+    """
+
+    exit_code = 77  # EX_NOPERM
+
+
 class RegistrationError(HiveError):
     """Raised when decorator registration fails.
 

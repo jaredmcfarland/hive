@@ -145,6 +145,8 @@ Commands receive `ctx` with:
 - beartype>=0.18.0 - Runtime type enforcement via refinement types
 - deal>=4.24.0 - Design-by-contract decorators (pre/post/inv)
 - hypothesis>=6.100.0 - Property-based testing (dev dependency)
+- Python 3.12+ + Textual (TUI), keyring (credentials), httpx (HTTP client), existing: Typer, Rich, SQLModel, Pydantic (002-tui-services)
+- SQLite via SQLModel (existing infrastructure from Phase 1) (002-tui-services)
 
 ## Development Tools (strict Python standards)
 - **uv** - Fast Python package manager and project tool
@@ -319,6 +321,7 @@ async def test_my_command():
 ```
 
 ## Recent Changes
+- 002-tui-services: Added Python 3.12+ + Textual (TUI), keyring (credentials), httpx (HTTP client), existing: Typer, Rich, SQLModel, Pydantic
 - strict-python-tooling: Implemented strict Python development standards
   - Upgraded to Python 3.12+ (enables type parameter syntax)
   - Added uv as package manager with lockfile
@@ -331,4 +334,3 @@ async def test_my_command():
   - `hive.contracts` - @requires/@ensures/@invariant decorators wrapping deal
   - `hive.testing` - strategy_for_type() and MockExecutionContext
   - User-friendly CLI error messages for validation failures
-- 001-core-framework: Added Python 3.11+ + Typer, Rich, SQLModel, Pydantic, Pydantic-Settings

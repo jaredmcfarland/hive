@@ -15,6 +15,7 @@ from hive.core.types import (
     EntityRegistration,
     QueryRegistration,
     ScreenRegistration,
+    ServiceRegistration,
 )
 from hive.errors import RegistrationError
 
@@ -32,6 +33,7 @@ class ApplicationRegistry:
         self._queries: dict[str, QueryRegistration] = {}
         self._entities: dict[str, EntityRegistration] = {}
         self._screens: dict[str, ScreenRegistration] = {}
+        self._services: dict[str, ServiceRegistration] = {}
         self._all_names: set[str] = set()  # Track all registered names
 
     @property
@@ -53,6 +55,11 @@ class ApplicationRegistry:
     def screens(self) -> Mapping[str, ScreenRegistration]:
         """Read-only mapping of screen names to registrations."""
         return self._screens
+
+    @property
+    def services(self) -> Mapping[str, ServiceRegistration]:
+        """Read-only mapping of service names to registrations."""
+        return self._services
 
     def _check_name_collision(self, name: str, kind: str) -> None:
         """Check if a name is already registered.
@@ -161,6 +168,21 @@ class ApplicationRegistry:
 
         self._screens[registration.name] = registration
 
+    def register_service(self, registration: ServiceRegistration) -> None:
+        """Register a service.
+
+        Args:
+            registration: The service registration.
+
+        Raises:
+            RegistrationError: If service name is already registered.
+        """
+        if registration.name in self._services:
+            raise RegistrationError(
+                f"Cannot register service '{registration.name}': name already registered"
+            )
+        self._services[registration.name] = registration
+
     def get_command(self, name: str) -> CommandRegistration | None:
         """Get a command registration by name.
 
@@ -236,3 +258,22 @@ class ApplicationRegistry:
             List of all screen registrations.
         """
         return list(self._screens.values())
+
+    def get_service(self, name: str) -> ServiceRegistration | None:
+        """Get a service registration by name.
+
+        Args:
+            name: The service name.
+
+        Returns:
+            The registration if found, None otherwise.
+        """
+        return self._services.get(name)
+
+    def list_services(self) -> list[ServiceRegistration]:
+        """Get all registered services.
+
+        Returns:
+            List of all service registrations.
+        """
+        return list(self._services.values())

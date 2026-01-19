@@ -1,0 +1,217 @@
+/* Hive TUI Default Stylesheet
+ *
+ * This stylesheet provides default styling for all Hive TUI widgets.
+ * Users can override these styles in their own TCSS files.
+ *
+ * SC-006: All widgets designed for 80x24 minimum terminal size.
+ * FR-025: All widgets themeable via Textual CSS.
+ */
+
+/* ============================================================================
+ * Screen Layout
+ * ============================================================================ */
+
+Screen {
+    layout: vertical;
+    background: $surface;
+}
+
+/* ============================================================================
+ * HiveHeader - FR-020
+ * ============================================================================ */
+
+HiveHeader {
+    dock: top;
+    height: 1;
+    background: $primary;
+    color: $text;
+}
+
+HiveHeader .hive-header--title {
+    text-style: bold;
+    color: $text;
+}
+
+HiveHeader .hive-header--screen {
+    text-style: italic;
+    color: $text-muted;
+    margin-left: 2;
+}
+
+HiveHeader .hive-header--clock {
+    dock: right;
+    color: $text-muted;
+}
+
+/* ============================================================================
+ * HiveFooter - FR-021
+ * ============================================================================ */
+
+HiveFooter {
+    dock: bottom;
+    height: 1;
+    background: $surface;
+    color: $text-muted;
+}
+
+HiveFooter .hive-footer--key {
+    text-style: bold;
+    color: $primary;
+}
+
+HiveFooter .hive-footer--hint {
+    text-style: italic;
+    color: $text-disabled;
+}
+
+/* ============================================================================
+ * HiveDataTable - FR-024
+ * ============================================================================ */
+
+HiveDataTable {
+    width: 100%;
+    height: 1fr;
+    background: $surface;
+}
+
+HiveDataTable > .datatable--header {
+    text-style: bold;
+    background: $primary;
+    color: $text;
+}
+
+HiveDataTable > .datatable--cursor {
+    background: $primary;
+    color: $text;
+}
+
+HiveDataTable > .datatable--hover {
+    background: $primary-lighten-1;
+}
+
+/* Loading State */
+HiveDataTable.hive-data-table--loading {
+    opacity: 0.5;
+}
+
+/* Error State */
+HiveDataTable.hive-data-table--error {
+    border: solid $error;
+}
+
+/* Empty State */
+HiveDataTable.hive-data-table--empty {
+    color: $text-muted;
+}
+
+/* ============================================================================
+ * ParameterModal
+ * ============================================================================ */
+
+ParameterModal {
+    align: center middle;
+}
+
+ParameterModal > Container {
+    width: 60;
+    max-width: 80%;
+    height: auto;
+    max-height: 80%;
+    padding: 1 2;
+    background: $surface;
+    border: solid $primary;
+}
+
+ParameterModal .parameter-modal--title {
+    text-style: bold;
+    text-align: center;
+    margin-bottom: 1;
+    color: $text;
+}
+
+ParameterModal .parameter-modal--field {
+    margin-bottom: 1;
+}
+
+ParameterModal .parameter-modal--label {
+    margin-bottom: 0;
+    color: $text;
+}
+
+ParameterModal .parameter-modal--input {
+    width: 100%;
+    background: $background;
+    border: solid $primary-darken-1;
+}
+
+ParameterModal .parameter-modal--error {
+    color: $error;
+    text-style: italic;
+}
+
+ParameterModal .parameter-modal--actions {
+    margin-top: 1;
+    align: center middle;
+}
+
+ParameterModal Button {
+    margin: 0 1;
+}
+
+ParameterModal Button.primary {
+    background: $primary;
+}
+
+ParameterModal Button.cancel {
+    background: $surface;
+    border: solid $primary;
+}
+
+/* ============================================================================
+ * Notification Toasts
+ * ============================================================================ */
+
+Toast {
+    width: auto;
+    max-width: 60;
+    padding: 1 2;
+    margin: 1;
+    background: $surface;
+    border: solid $primary;
+}
+
+Toast.-information {
+    border: solid $primary;
+}
+
+Toast.-warning {
+    border: solid $warning;
+}
+
+Toast.-error {
+    border: solid $error;
+}
+
+/* ============================================================================
+ * Theme Variables Reference
+ * ============================================================================
+ *
+ * These variables are available for customization:
+ *
+ * Colors:
+ *   $primary          - Primary brand color
+ *   $primary-lighten-1 - Lighter shade of primary
+ *   $primary-darken-1  - Darker shade of primary
+ *   $secondary        - Secondary color
+ *   $background       - Background color
+ *   $surface          - Surface/card color
+ *   $error            - Error color
+ *   $warning          - Warning color
+ *   $success          - Success color
+ *
+ * Text Colors:
+ *   $text             - Primary text color
+ *   $text-muted       - Muted/secondary text
+ *   $text-disabled    - Disabled text
+ *
+ * ============================================================================ */
