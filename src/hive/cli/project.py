@@ -209,6 +209,43 @@ def test_status():
 # =============================================================================
 
 
+def _normalize_project_name(name: str) -> str:
+    """Normalize project name to a valid Python package name.
+
+    Converts hyphens to underscores (e.g., 'my-app' -> 'my_app').
+    Validates the result is a valid Python identifier.
+
+    Args:
+        name: Raw project name.
+
+    Returns:
+        Normalized package name.
+
+    Raises:
+        ValueError: If name cannot be converted to valid identifier.
+    """
+    # Convert hyphens to underscores (common convention)
+    normalized = name.replace("-", "_")
+
+    # Check if it's a valid Python identifier
+    if not normalized.isidentifier():
+        msg = (
+            f"Invalid project name: '{name}'. "
+            "Project name must be a valid Python identifier "
+            "(letters, digits, underscores; cannot start with digit)."
+        )
+        raise ValueError(msg)
+
+    # Check it's not a Python keyword
+    import keyword  # noqa: PLC0415
+
+    if keyword.iskeyword(normalized):
+        msg = f"Invalid project name: '{name}' is a Python keyword."
+        raise ValueError(msg)
+
+    return normalized
+
+
 def create_project(
     name: str,
     path: str | Path | None = None,
@@ -220,7 +257,7 @@ def create_project(
     """Create a new Hive project.
 
     Args:
-        name: Project name (valid Python package name).
+        name: Project name (valid Python package name, hyphens converted to underscores).
         path: Directory to create project in (default: current).
         description: Project description.
         author: Author name.
@@ -232,7 +269,11 @@ def create_project(
 
     Raises:
         FileExistsError: If directory exists and force=False.
+        ValueError: If name is not a valid Python package name.
     """
+    # Normalize and validate project name
+    name = _normalize_project_name(name)
+
     # Determine project directory
     base_path = Path(path) if path else Path.cwd()
     project_path = base_path / name
@@ -457,11 +498,15 @@ def create_file_watcher(path: str | Path) -> Any:
 
 def _build_server_command(
     interface: str,
-    project_path: Path,
+    project_path: Path,  # noqa: ARG001  # Reserved for future per-project configuration
     rest_port: int = 8000,
     mcp_port: int = 8080,
 ) -> list[str]:
     """Build command to start a server for the given interface.
+
+    Uses hive CLI commands which leverage discover_app() to find the Hive App
+    in the project, supporting both simple (app.py) and scaffolded (src/<project>/app.py)
+    layouts.
 
     Args:
         interface: Interface type (rest, mcp).
@@ -473,18 +518,15 @@ def _build_server_command(
         Command list to start the server.
     """
     if interface == "rest":
-        # Use uvicorn with the app discovery pattern
-        # Assumes app.py with `app` variable exists
+        # Use hive serve which uses RESTGenerator with discover_app()
+        # This properly discovers the Hive App and creates the FastAPI server
         return [
-            "uvicorn",
-            "app:app",
-            "--factory",
+            "hive",
+            "serve",
             "--host",
             "127.0.0.1",
             "--port",
             str(rest_port),
-            "--app-dir",
-            str(project_path / "src"),
         ]
     if interface == "mcp":
         # Use hive CLI to serve MCP
@@ -621,6 +663,9 @@ def new_command(  # noqa: PLR0913
     feature_list = features.split(",") if features else None
 
     try:
+        # Normalize name for display (hyphens become underscores)
+        normalized_name = _normalize_project_name(name)
+
         project_path = create_project(
             name=name,
             path=path,
@@ -634,20 +679,26 @@ def new_command(  # noqa: PLR0913
             console.print_json(
                 data={
                     "path": project_path,
-                    "name": name,
+                    "name": normalized_name,
                     "next_steps": [
-                        f"cd {name}",
+                        f"cd {normalized_name}",
                         "uv sync",
-                        f"{name} hello",
+                        f"{normalized_name} hello",
                     ],
                 }
             )
         else:
             console.print(f"\n[bold green]Created project:[/bold green] {project_path}")
             console.print("\n[bold]Next steps:[/bold]")
-            console.print(f"  cd {name}")
+            console.print(f"  cd {normalized_name}")
             console.print("  uv sync")
-            console.print(f"  {name} hello")
+            console.print(f"  {normalized_name} hello")
+    except ValueError as e:
+        if json_output:
+            console.print_json(data={"error": str(e)})
+        else:
+            console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1) from e
     except FileExistsError as e:
         if json_output:
             console.print_json(data={"error": str(e)})

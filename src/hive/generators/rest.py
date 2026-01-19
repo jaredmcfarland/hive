@@ -71,6 +71,27 @@ def format_execution_error(
     return result
 
 
+def _get_base_type(param_type: Any) -> type:
+    """Extract base type from Annotated or return type as-is.
+
+    For `Annotated[int, Is[...]]`, returns `int`.
+    For plain types like `str`, returns `str`.
+
+    Args:
+        param_type: A type annotation, possibly Annotated.
+
+    Returns:
+        The base type without Annotated wrapper.
+    """
+    from typing import Annotated, get_args, get_origin  # noqa: PLC0415
+
+    origin = get_origin(param_type)
+    if origin is Annotated:
+        args = get_args(param_type)
+        return args[0] if args else param_type
+    return param_type
+
+
 AuthType = Literal["none", "api_key", "bearer", "basic"]
 
 
@@ -502,7 +523,8 @@ class RESTGenerator:
         # Build parameter code for the function signature
         param_code_parts: list[str] = []
         for p in param_list:
-            type_name = p.type.__name__ if hasattr(p.type, "__name__") else "str"
+            base_type = _get_base_type(p.type)
+            type_name = base_type.__name__ if hasattr(base_type, "__name__") else "str"
             if p.has_default:
                 default_repr = repr(p.default)
                 param_code_parts.append(f"{p.name}: {type_name} = {default_repr}")

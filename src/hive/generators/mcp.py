@@ -170,6 +170,9 @@ class MCPGenerator:
     ) -> None:
         """Register an MCP tool with the FastMCP server.
 
+        Creates a function with explicit parameter signature since FastMCP
+        does not support **kwargs in tool functions.
+
         Args:
             mcp: FastMCP server instance.
             app: Hive App for command execution.
@@ -180,14 +183,70 @@ class MCPGenerator:
             msg = f"Command not found: {tool.name}"
             raise ValueError(msg)
 
-        # Create tool function
-        @mcp.tool(name=tool.name, description=tool.description)
-        async def tool_handler(**kwargs: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
-            """Execute the command."""
-            from hive.runtime.context import ExecutionContext  # noqa: PLC0415
+        # Build parameter list (exclude ctx)
+        params = [p for p in cmd_reg.parameters if p.name != "ctx"]
 
-            async with ExecutionContext() as ctx:
-                return await cmd_reg.func(ctx, **kwargs)
+        # Build function signature string with explicit parameters
+        param_parts = []
+        for p in params:
+            base_type = self._get_base_type(p.type)
+            type_name = base_type.__name__ if hasattr(base_type, "__name__") else "Any"
+            if p.has_default:
+                param_parts.append(f"{p.name}: {type_name} = _defaults['{p.name}']")
+            else:
+                param_parts.append(f"{p.name}: {type_name}")
+
+        params_str = ", ".join(param_parts)
+        kwargs_str = ", ".join(f"{p.name}={p.name}" for p in params)
+
+        # Build function code dynamically
+        func_code = f'''
+async def tool_handler({params_str}) -> Any:
+    """Execute the {tool.name} command."""
+    from hive.runtime.context import ExecutionContext
+    async with ExecutionContext() as ctx:
+        return await _cmd_func(ctx, {kwargs_str})
+'''
+
+        # Build namespace with required variables
+        namespace: dict[str, Any] = {
+            "_cmd_func": cmd_reg.func,
+            "_defaults": {p.name: p.default for p in params if p.has_default},
+            "Any": Any,
+            "int": int,
+            "str": str,
+            "float": float,
+            "bool": bool,
+            "list": list,
+            "dict": dict,
+        }
+
+        # Execute to create the function
+        exec(func_code, namespace)  # noqa: S102  # nosec B102
+        handler = namespace["tool_handler"]
+
+        # Register with FastMCP
+        mcp.tool(name=tool.name, description=tool.description)(handler)
+
+    def _get_base_type(self, param_type: Any) -> type:
+        """Extract base type from Annotated or return type as-is.
+
+        For `Annotated[int, Is[...]]`, returns `int`.
+        For plain types like `str`, returns `str`.
+
+        Args:
+            param_type: A type annotation, possibly Annotated.
+
+        Returns:
+            The base type without Annotated wrapper.
+        """
+        from typing import Annotated, get_args, get_origin  # noqa: PLC0415
+
+        origin = get_origin(param_type)
+        if origin is Annotated:
+            args = get_args(param_type)
+            return args[0] if args else param_type
+        return param_type
 
 
 def format_mcp_error(error: Exception) -> dict[str, Any]:
