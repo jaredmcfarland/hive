@@ -8,9 +8,24 @@ RED phase: These tests should FAIL until MCP server is implemented.
 
 from __future__ import annotations
 
+import re
 import subprocess
 
 import pytest
+
+
+def strip_ansi(text: str) -> str:
+    """Remove ANSI escape codes from text.
+
+    Args:
+        text: Text that may contain ANSI escape sequences.
+
+    Returns:
+        Text with all ANSI escape sequences removed.
+    """
+    # Pattern matches ANSI escape sequences like \x1b[1;36m
+    ansi_pattern = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_pattern.sub("", text)
 
 
 class TestHiveMCPServeCLI:
@@ -25,8 +40,10 @@ class TestHiveMCPServeCLI:
             timeout=30,
         )
         assert result.returncode == 0
-        assert "serve" in result.stdout.lower()
-        assert "--transport" in result.stdout
+        # Strip ANSI codes - Rich inserts color codes between option hyphens
+        clean_stdout = strip_ansi(result.stdout)
+        assert "serve" in clean_stdout.lower()
+        assert "--transport" in clean_stdout
 
     def test_mcp_serve_lists_transports(self) -> None:
         """Hive mcp serve --help lists available transports."""
@@ -36,8 +53,9 @@ class TestHiveMCPServeCLI:
             text=True,
             timeout=30,
         )
-        assert "stdio" in result.stdout.lower()
-        assert "sse" in result.stdout.lower()
+        clean_stdout = strip_ansi(result.stdout)
+        assert "stdio" in clean_stdout.lower()
+        assert "sse" in clean_stdout.lower()
 
     def test_mcp_serve_default_transport_is_stdio(self) -> None:
         """Hive mcp serve defaults to stdio transport."""
@@ -49,7 +67,8 @@ class TestHiveMCPServeCLI:
             timeout=30,
         )
         # Check default value indicator
-        assert "stdio" in result.stdout.lower()
+        clean_stdout = strip_ansi(result.stdout)
+        assert "stdio" in clean_stdout.lower()
 
     @pytest.mark.skip(reason="Requires actual MCP server running")
     def test_mcp_serve_stdio_transport(self) -> None:
