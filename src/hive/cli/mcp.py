@@ -80,7 +80,9 @@ def serve_command(
             if json_output:
                 console.print_json(data={"status": "error", "error": msg})
             else:
-                console.print(f"[red]Error:[/red] {msg}")
+                console.print("[red]Error:[/red] FastMCP is not installed.")
+                # Escape brackets to prevent Rich interpreting [mcp] as markup
+                console.print("  Install with: pip install hive-framework\\[mcp]", style="cyan")
             raise typer.Exit(1)  # noqa: TRY301
 
         # Get the current app

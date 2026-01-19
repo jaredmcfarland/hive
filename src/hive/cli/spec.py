@@ -88,9 +88,13 @@ def export_command(
                 console.print_json(data={"status": "success", "output": output})
             else:
                 console.print(f"[green]✓[/green] Specification exported to {output}")
+        # Print to stdout
+        elif format == "json":
+            # Use print_json for proper JSON escaping of control characters
+            console.print_json(result)
         else:
-            # Print to stdout - use markup=False to avoid Rich interpreting
-            # TOML section headers like [metadata] as markup tags
+            # TOML: use markup=False to avoid Rich interpreting
+            # section headers like [metadata] as markup tags
             console.print(result, markup=False, highlight=False)
 
     except Exception as e:

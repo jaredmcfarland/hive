@@ -110,10 +110,8 @@ def serve(  # noqa: C901, PLR0913, PLR0912
                     }
                 )
             else:
-                console.print(
-                    "[red]Error:[/red] FastAPI is not installed. "
-                    "Install with: pip install hive-framework[rest]"
-                )
+                console.print("[red]Error:[/red] FastAPI is not installed.")
+                console.print("  Install with: pip install hive-framework\\[rest]", style="cyan")
             raise typer.Exit(code=1)
     except ImportError as e:
         if json_output:
