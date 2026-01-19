@@ -206,6 +206,47 @@ class TestBreakingChangeDetection:
         # Adding a command is NOT breaking
         assert diff.has_breaking_changes is False
 
+    def test_removed_optional_parameter_is_not_breaking(self) -> None:
+        """Removing an optional parameter is NOT a breaking change."""
+        from hive.spec.diff import diff_specifications
+
+        spec1 = {
+            "metadata": {"name": "app", "version": "1.0.0"},
+            "commands": {
+                "cmd": {
+                    "name": "cmd",
+                    "parameters": {
+                        "optional_param": {
+                            "name": "optional_param",
+                            "type": "string",
+                            "required": False,
+                            "default": "default_value",
+                        },
+                    },
+                    "return_type": {},
+                },
+            },
+            "queries": {},
+            "entities": {},
+        }
+        spec2 = {
+            "metadata": {"name": "app", "version": "1.1.0"},
+            "commands": {
+                "cmd": {
+                    "name": "cmd",
+                    "parameters": {},  # Removed optional parameter
+                    "return_type": {},
+                },
+            },
+            "queries": {},
+            "entities": {},
+        }
+
+        diff = diff_specifications(spec1, spec2)
+
+        # Removing optional parameter is NOT breaking
+        assert diff.has_breaking_changes is False
+
     def test_added_optional_parameter_is_not_breaking(self) -> None:
         """Adding an optional parameter is NOT a breaking change."""
         from hive.spec.diff import diff_specifications

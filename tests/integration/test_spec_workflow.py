@@ -8,11 +8,34 @@ RED phase: These tests should FAIL until CLI commands are implemented.
 
 from collections.abc import Generator
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 
 import pytest
+
+
+@pytest.fixture
+def temp_app_dir() -> Generator[Path, None, None]:
+    """Create a temporary directory with a minimal Hive app for testing."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        app_dir = Path(tmpdir)
+
+        # Create a minimal app.py
+        app_content = '''"""Test app for integration tests."""
+from hive import App, command
+
+app = App("testapp")
+
+@command(app)
+async def hello(ctx, name: str = "World") -> str:
+    """Say hello."""
+    return f"Hello, {name}!"
+'''
+        (app_dir / "app.py").write_text(app_content)
+
+        yield app_dir
 
 
 class TestHiveSpecExportCLI:
@@ -30,57 +53,59 @@ class TestHiveSpecExportCLI:
         assert result.returncode == 0
         assert "export" in result.stdout.lower()
 
-    def test_spec_export_json_to_stdout(self) -> None:
+    def test_spec_export_json_to_stdout(self, temp_app_dir: Path) -> None:
         """Hive spec export --format json outputs to stdout."""
         result = subprocess.run(  # noqa: PLW1510
             ["uv", "run", "hive", "spec", "export", "--format", "json"],
             capture_output=True,
             text=True,
             timeout=30,
+            cwd=temp_app_dir,
+            env={**os.environ, "PYTHONPATH": str(temp_app_dir)},
         )
-        assert result.returncode == 0
+        assert result.returncode == 0, f"Failed: {result.stdout}\n{result.stderr}"
 
         # Output should be valid JSON
         output = json.loads(result.stdout)
         assert "$schema" in output
         assert "metadata" in output
 
-    def test_spec_export_json_to_file(self) -> None:
+    def test_spec_export_json_to_file(self, temp_app_dir: Path) -> None:
         """Hive spec export --format json -o file.json writes to file."""
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-            output_path = Path(f.name)
+        output_path = temp_app_dir / "spec.json"
 
-        try:
-            result = subprocess.run(  # noqa: PLW1510
-                ["uv", "run", "hive", "spec", "export", "--format", "json", "-o", str(output_path)],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            assert result.returncode == 0
-            assert output_path.exists()
+        result = subprocess.run(  # noqa: PLW1510
+            ["uv", "run", "hive", "spec", "export", "--format", "json", "-o", str(output_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=temp_app_dir,
+            env={**os.environ, "PYTHONPATH": str(temp_app_dir)},
+        )
+        assert result.returncode == 0, f"Failed: {result.stdout}\n{result.stderr}"
+        assert output_path.exists()
 
-            with output_path.open() as f:
-                data = json.load(f)
-            assert "$schema" in data
-        finally:
-            output_path.unlink(missing_ok=True)
+        with output_path.open() as f:
+            data = json.load(f)
+        assert "$schema" in data
 
-    def test_spec_export_json_flag(self) -> None:
+    def test_spec_export_json_flag(self, temp_app_dir: Path) -> None:
         """Hive spec export --json outputs machine-readable JSON."""
         result = subprocess.run(  # noqa: PLW1510
             ["uv", "run", "hive", "spec", "export", "--format", "json", "--json"],
             capture_output=True,
             text=True,
             timeout=30,
+            cwd=temp_app_dir,
+            env={**os.environ, "PYTHONPATH": str(temp_app_dir)},
         )
-        assert result.returncode == 0
+        assert result.returncode == 0, f"Failed: {result.stdout}\n{result.stderr}"
 
         # Should be valid JSON (for --json flag output format)
         output = json.loads(result.stdout)
         assert isinstance(output, dict)
 
-    def test_spec_export_toml_to_stdout(self) -> None:
+    def test_spec_export_toml_to_stdout(self, temp_app_dir: Path) -> None:
         """Hive spec export --format toml outputs to stdout."""
         import tomllib
 
@@ -89,35 +114,49 @@ class TestHiveSpecExportCLI:
             capture_output=True,
             text=True,
             timeout=30,
+            cwd=temp_app_dir,
+            env={**os.environ, "PYTHONPATH": str(temp_app_dir)},
         )
-        assert result.returncode == 0
+        assert result.returncode == 0, f"Failed: {result.stdout}\n{result.stderr}"
 
         # Output should be valid TOML
         output = tomllib.loads(result.stdout)
         assert "metadata" in output
 
-    def test_spec_export_toml_to_file(self) -> None:
+    def test_spec_export_toml_to_file(self, temp_app_dir: Path) -> None:
         """Hive spec export --format toml -o file.toml writes to file."""
         import tomllib
 
-        with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as f:
-            output_path = Path(f.name)
+        output_path = temp_app_dir / "spec.toml"
 
-        try:
+        result = subprocess.run(  # noqa: PLW1510
+            ["uv", "run", "hive", "spec", "export", "--format", "toml", "-o", str(output_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=temp_app_dir,
+            env={**os.environ, "PYTHONPATH": str(temp_app_dir)},
+        )
+        assert result.returncode == 0, f"Failed: {result.stdout}\n{result.stderr}"
+        assert output_path.exists()
+
+        with output_path.open("rb") as f:
+            data = tomllib.load(f)
+        assert "metadata" in data
+
+    def test_spec_export_no_app_shows_error(self) -> None:
+        """Hive spec export without an app shows helpful error."""
+        with tempfile.TemporaryDirectory() as tmpdir:
             result = subprocess.run(  # noqa: PLW1510
-                ["uv", "run", "hive", "spec", "export", "--format", "toml", "-o", str(output_path)],
+                ["uv", "run", "hive", "spec", "export", "--format", "json"],
                 capture_output=True,
                 text=True,
                 timeout=30,
+                cwd=tmpdir,
             )
-            assert result.returncode == 0
-            assert output_path.exists()
-
-            with output_path.open("rb") as f:
-                data = tomllib.load(f)
-            assert "metadata" in data
-        finally:
-            output_path.unlink(missing_ok=True)
+            # Should fail with helpful error
+            assert result.returncode != 0
+            assert "No Hive app found" in result.stdout
 
 
 class TestHiveSpecDiffCLI:

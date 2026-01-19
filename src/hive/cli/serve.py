@@ -31,32 +31,15 @@ console = Console()
 def _get_app() -> Any:
     """Get the Hive App instance.
 
-    This is a placeholder that should be configured by the user's app.
-    In a real implementation, this would load the app from the current
-    directory or a specified module.
+    Discovers the app by searching common module locations.
     """
-    # ruff: noqa: I001, PLC0415
-    import sys
-    from pathlib import Path
+    from hive.cli.utils import AppDiscoveryError, discover_app  # noqa: PLC0415
 
-    # Add current directory to path
-    cwd = Path.cwd()
-    if str(cwd) not in sys.path:
-        sys.path.insert(0, str(cwd))
-
-    # Try common app locations
-    for module_name in ["app", "main", "src.app", "src.main"]:
-        try:
-            module = __import__(module_name, fromlist=["app"])
-            if hasattr(module, "app"):
-                return module.app
-        except ImportError:
-            continue
-
-    console.print(
-        "[red]Error:[/red] No Hive app found. Create an app.py with 'app = App(\"myapp\")'"
-    )
-    raise typer.Exit(code=1)
+    try:
+        return discover_app()
+    except AppDiscoveryError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1) from e
 
 
 @serve_app.callback(invoke_without_command=True)
@@ -116,7 +99,7 @@ def serve(  # noqa: C901, PLR0913, PLR0912
     """
     # Check if REST is available
     try:
-        from hive.generators.rest import REST_AVAILABLE, RESTGenerator
+        from hive.generators.rest import REST_AVAILABLE, RESTGenerator  # noqa: PLC0415
 
         if not REST_AVAILABLE:
             if json_output:

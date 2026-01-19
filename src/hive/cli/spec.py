@@ -247,12 +247,12 @@ def diff_command(  # noqa: C901, PLR0912
 def _get_current_app() -> App:  # type: ignore[name-defined]  # noqa: F821
     """Get the current project's App instance.
 
-    For now, creates an empty app. In practice, this would:
-    1. Look for a hive.toml or pyproject.toml with [tool.hive]
-    2. Import the configured app module
-    3. Return the App instance
+    Discovers the app by searching common module locations.
     """
-    from hive import App  # noqa: PLC0415
+    from hive.cli.utils import AppDiscoveryError, discover_app  # noqa: PLC0415
 
-    # Create a default app - in practice this would load from config
-    return App("hive")
+    try:
+        return discover_app()
+    except AppDiscoveryError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e

@@ -34,10 +34,8 @@ class TestRESTOptionalDependency:
 
     def test_serve_without_fastapi_raises_error(self) -> None:
         """Attempting to serve REST without FastAPI raises helpful error."""
-        from hive import App
         from hive.generators.rest import RESTGenerator
 
-        _app = App("test")  # Would be used in serve()
         generator = RESTGenerator()
 
         # Verify the method exists

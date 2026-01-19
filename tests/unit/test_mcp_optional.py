@@ -49,10 +49,8 @@ class TestMCPOptionalDependency:
 
     def test_serve_without_fastmcp_raises_error(self) -> None:
         """Attempting to serve MCP without FastMCP raises helpful error."""
-        from hive import App
         from hive.generators.mcp import MCPGenerator
 
-        _app = App("test")  # Would be used in serve()
         generator = MCPGenerator()
 
         # If FastMCP is not installed, serve should raise

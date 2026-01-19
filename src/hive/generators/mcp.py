@@ -25,6 +25,7 @@ try:
 
     _mcp_available = True
 except ImportError:
+    # fastmcp is an optional dependency; MCP features disabled when not installed.
     pass
 
 MCP_AVAILABLE: bool = _mcp_available

@@ -422,6 +422,20 @@ def publish_project(
 # =============================================================================
 
 
+def _get_python_file_filter() -> Any:
+    """Get a filter function for Python files.
+
+    Returns:
+        A filter function that accepts Python files and excludes cache directories.
+    """
+
+    def filter_func(_: Any, path: str) -> bool:
+        """Filter for Python files, excluding cache directories."""
+        return path.endswith(".py") and "__pycache__" not in path and ".venv" not in path
+
+    return filter_func
+
+
 def create_file_watcher(path: str | Path) -> Any:
     """Create a file watcher for hot reload.
 
@@ -437,10 +451,53 @@ def create_file_watcher(path: str | Path) -> Any:
     # Filter to only Python files, ignore __pycache__
     return watch(
         path,
-        watch_filter=lambda _, p: (
-            p.endswith(".py") and "__pycache__" not in p and ".venv" not in p
-        ),
+        watch_filter=_get_python_file_filter(),
     )
+
+
+def _build_server_command(
+    interface: str,
+    project_path: Path,
+    rest_port: int = 8000,
+    mcp_port: int = 8080,
+) -> list[str]:
+    """Build command to start a server for the given interface.
+
+    Args:
+        interface: Interface type (rest, mcp).
+        project_path: Path to the project directory.
+        rest_port: Port for REST API server.
+        mcp_port: Port for MCP server.
+
+    Returns:
+        Command list to start the server.
+    """
+    if interface == "rest":
+        # Use uvicorn with the app discovery pattern
+        # Assumes app.py with `app` variable exists
+        return [
+            "uvicorn",
+            "app:app",
+            "--factory",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(rest_port),
+            "--app-dir",
+            str(project_path / "src"),
+        ]
+    if interface == "mcp":
+        # Use hive CLI to serve MCP
+        return [
+            "hive",
+            "mcp",
+            "serve",
+            "--transport",
+            "sse",
+            "--port",
+            str(mcp_port),
+        ]
+    return []
 
 
 def start_dev_server(
@@ -450,6 +507,9 @@ def start_dev_server(
     mcp_port: int = 8080,
 ) -> None:
     """Start development server with hot reload.
+
+    Uses watchfiles.run_process to manage server subprocesses with automatic
+    restart when files change.
 
     Args:
         project_path: Path to project.
@@ -464,22 +524,56 @@ def start_dev_server(
     console.print(f"  Interfaces: {', '.join(interfaces)}")
     console.print("  Hot reload: enabled")
 
+    # Determine which server to run
+    # Priority: rest > mcp > cli (only run one at a time with hot reload)
+    server_interface = None
     if "rest" in interfaces:
+        server_interface = "rest"
         console.print(f"  REST API: http://127.0.0.1:{rest_port}")
-    if "mcp" in interfaces:
+        console.print(f"  OpenAPI docs: http://127.0.0.1:{rest_port}/docs")
+    elif "mcp" in interfaces:
+        server_interface = "mcp"
         console.print(f"  MCP Server: http://127.0.0.1:{mcp_port}")
 
-    # Watch for changes
     console.print("\n[yellow]Watching for changes...[/yellow]")
 
-    try:
-        for changes in create_file_watcher(project_path):
-            console.print(f"[cyan]Detected changes:[/cyan] {len(changes)} files")
-            for change_type, path in changes:
-                console.print(f"  {change_type}: {path}")
-            console.print("[green]Reloading...[/green]")
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Stopping development server[/yellow]")
+    if server_interface:
+        # Use watchfiles.run_process for actual server reload
+        try:
+            from watchfiles import run_process  # noqa: PLC0415
+
+            cmd = _build_server_command(
+                server_interface,
+                project_path,
+                rest_port=rest_port,
+                mcp_port=mcp_port,
+            )
+
+            if cmd:
+                console.print(f"[dim]Running: {' '.join(cmd)}[/dim]\n")
+                run_process(
+                    project_path,
+                    target=cmd[0],
+                    args=tuple(cmd[1:]),
+                    watch_filter=_get_python_file_filter(),
+                    callback=lambda changes: console.print(
+                        f"\n[cyan]Detected {len(changes)} change(s), restarting...[/cyan]\n"
+                    ),
+                )
+            else:
+                console.print(f"[red]No command configured for interface: {server_interface}[/red]")
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Stopping development server[/yellow]")
+    else:
+        # For CLI-only mode, just watch and report changes (no server to restart)
+        try:
+            for changes in create_file_watcher(project_path):
+                console.print(f"[cyan]Detected changes:[/cyan] {len(changes)} files")
+                for change_type, path in changes:
+                    console.print(f"  {change_type}: {path}")
+                console.print("[dim]Note: CLI mode - no server to restart[/dim]")
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Stopping file watcher[/yellow]")
 
 
 # =============================================================================

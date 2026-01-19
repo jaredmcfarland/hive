@@ -53,11 +53,12 @@ def diff_specifications(  # noqa: C901, PLR0912
 
     # Handle removed items
     for path in diff.get("dictionary_item_removed", []):
-        is_breaking = _is_breaking_removal(path)
+        old_value = _get_value_at_path(spec1, path)
+        is_breaking = _is_breaking_removal(path, old_value)
         item = DiffItem(
             path=_normalize_path(path),
             change_type="removed",
-            old_value=_get_value_at_path(spec1, path),
+            old_value=old_value,
             breaking=is_breaking,
         )
         changes.append(item)
@@ -154,11 +155,12 @@ def diff_specifications(  # noqa: C901, PLR0912
 
     # Handle iterable item removals
     for path in diff.get("iterable_item_removed", {}):
-        is_breaking = _is_breaking_removal(path)
+        old_value = diff["iterable_item_removed"][path]
+        is_breaking = _is_breaking_removal(path, old_value)
         item = DiffItem(
             path=_normalize_path(path),
             change_type="removed",
-            old_value=diff["iterable_item_removed"][path],
+            old_value=old_value,
             breaking=is_breaking,
         )
         changes.append(item)
@@ -207,14 +209,18 @@ def _get_value_at_path(data: dict[str, Any], path: str) -> Any:
     return current
 
 
-def _is_breaking_removal(path: str) -> bool:
+def _is_breaking_removal(path: str, old_value: Any = None) -> bool:
     """Determine if a removal is a breaking change.
 
     Breaking removals:
     - Removing a command
     - Removing a query
     - Removing an entity
-    - Removing a required parameter
+    - Removing a required parameter (optional parameters can be removed safely)
+
+    Args:
+        path: The path to the removed item.
+        old_value: The value that was removed (used to check if parameter was required).
     """
     normalized = _normalize_path(path)
 
@@ -227,8 +233,12 @@ def _is_breaking_removal(path: str) -> bool:
         parts = normalized.split(".")
         if len(parts) == top_level_parts:  # commands.<name> - command removed
             return True
-        # Removing a parameter might be breaking
+        # Removing a parameter is only breaking if it was required
         if "parameters" in normalized:
+            # Check if the removed parameter was required
+            # Default to True (breaking) if we can't determine
+            if isinstance(old_value, dict):
+                return old_value.get("required", True)
             return True
 
     # Removing a query is breaking
