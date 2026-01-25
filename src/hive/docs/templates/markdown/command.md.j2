@@ -1,0 +1,71 @@
+{# Template for command documentation #}
+## {{ command.name }}
+
+{% if command.description %}
+{{ command.description }}
+{% else %}
+*No description available.*
+{% endif %}
+
+{% if command.aliases %}
+**Aliases**: {{ command.aliases | join(", ") }}
+{% endif %}
+
+{% if command.entities %}
+**Operates on**: {{ command.entities | join(", ") }}
+{% endif %}
+
+### Parameters
+
+{% if command.parameters %}
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+{% for param in command.parameters %}
+| `{{ param.name }}` | {{ param.type | format_type }} | {{ "Yes" if param.required else "No" }} | {{ param.default | format_default if param.default is not none else "-" }} | {{ param.description or "-" }} |
+{% endfor %}
+
+{% for param in command.parameters %}
+{% set constraints = param | format_constraints %}
+{% if constraints %}
+- **{{ param.name }}**: {{ constraints }}
+{% endif %}
+{% endfor %}
+{% else %}
+*No parameters.*
+{% endif %}
+
+### Returns
+
+{% if command.return_type %}
+{{ command.return_type | tojson(indent=2) }}
+{% else %}
+*No return value specified.*
+{% endif %}
+
+{% if contracts and (contracts.requires or contracts.ensures) %}
+### Contracts
+
+{% if contracts.requires %}
+**Preconditions** (`@requires`):
+{% for req in contracts.requires %}
+- {{ req }}
+{% endfor %}
+{% endif %}
+
+{% if contracts.ensures %}
+**Postconditions** (`@ensures`):
+{% for ens in contracts.ensures %}
+- {{ ens }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{% if examples %}
+### Examples
+
+```python
+{{ examples }}
+```
+{% endif %}
+
+---

@@ -1,0 +1,39 @@
+# Analytics Example - Hive DuckDB Integration
+# Demonstrates data analytics with DuckDB backend and rich output
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "analytics-example"
+version = "0.1.0"
+description = "Hive example demonstrating DuckDB analytics and rich output"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "hive-framework",
+    "duckdb>=1.0.0",
+]
+
+[project.scripts]
+analytics = "analytics:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/analytics"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ARG", "D"]
+ignore = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"

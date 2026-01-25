@@ -1,0 +1,71 @@
+{# Template for query documentation #}
+## {{ query.name }}
+
+{% if query.description %}
+{{ query.description }}
+{% else %}
+*No description available.*
+{% endif %}
+
+{% if query.cache_ttl %}
+**Cache TTL**: {{ query.cache_ttl }} seconds
+{% endif %}
+
+{% if query.entities %}
+**Reads from**: {{ query.entities | join(", ") }}
+{% endif %}
+
+### Parameters
+
+{% if query.parameters %}
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+{% for param in query.parameters %}
+| `{{ param.name }}` | {{ param.type | format_type }} | {{ "Yes" if param.required else "No" }} | {{ param.default | format_default if param.default is not none else "-" }} | {{ param.description or "-" }} |
+{% endfor %}
+
+{% for param in query.parameters %}
+{% set constraints = param | format_constraints %}
+{% if constraints %}
+- **{{ param.name }}**: {{ constraints }}
+{% endif %}
+{% endfor %}
+{% else %}
+*No parameters.*
+{% endif %}
+
+### Returns
+
+{% if query.return_type %}
+{{ query.return_type | tojson(indent=2) }}
+{% else %}
+*No return value specified.*
+{% endif %}
+
+{% if contracts and (contracts.requires or contracts.ensures) %}
+### Contracts
+
+{% if contracts.requires %}
+**Preconditions** (`@requires`):
+{% for req in contracts.requires %}
+- {{ req }}
+{% endfor %}
+{% endif %}
+
+{% if contracts.ensures %}
+**Postconditions** (`@ensures`):
+{% for ens in contracts.ensures %}
+- {{ ens }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{% if examples %}
+### Examples
+
+```python
+{{ examples }}
+```
+{% endif %}
+
+---

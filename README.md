@@ -97,18 +97,28 @@ The framework is designed for the emerging category of "terminal-agent-native" s
 
 ## Installation
 
-Hive requires Python 3.11 or later.
+Hive requires Python 3.12 or later.
 
 ```bash
+# Using uv (recommended)
+uv add hive-framework
+
+# Using pip
 pip install hive-framework
 ```
 
 To include optional dependencies for MCP server or REST API generation:
 
 ```bash
-pip install hive-framework[mcp]      # Include FastMCP
-pip install hive-framework[rest]     # Include FastAPI
-pip install hive-framework[all]      # Include everything
+# Using uv
+uv add "hive-framework[mcp]"      # Include FastMCP
+uv add "hive-framework[rest]"     # Include FastAPI
+uv add "hive-framework[all]"      # Include everything
+
+# Using pip
+pip install "hive-framework[mcp]"
+pip install "hive-framework[rest]"
+pip install "hive-framework[all]"
 ```
 
 ---
@@ -272,6 +282,46 @@ Hive provides the application shell (header, footer, command palette). You imple
 
 ---
 
+## Defining Services
+
+Services are external API clients decorated with `@service`. They provide automatic credential management and lifecycle handling.
+
+```python
+from hive import service, App
+import httpx
+
+app = App("myapp")
+
+@service(app, credentials="keyring:myapp/api_key")
+class GitHubClient:
+    """GitHub API client with secure credential storage."""
+
+    def __init__(self, api_key: str | None = None) -> None:
+        self.api_key = api_key
+        self.base_url = "https://api.github.com"
+
+    async def get_user(self, username: str) -> dict:
+        async with httpx.AsyncClient() as client:
+            headers = {"Authorization": f"token {self.api_key}"} if self.api_key else {}
+            response = await client.get(f"{self.base_url}/users/{username}", headers=headers)
+            response.raise_for_status()
+            return response.json()
+```
+
+Commands access services through the execution context:
+
+```python
+@command(app)
+async def user_info(ctx, username: str) -> UserInfo:
+    """Fetch GitHub user information."""
+    data = await ctx.services.github.get_user(username)
+    return UserInfo(**data)
+```
+
+Credentials are stored securely using the system keyring and can be configured via CLI commands you define.
+
+---
+
 ## Execution Context
 
 Commands, queries, and screens receive a context object providing access to framework services:
@@ -323,6 +373,114 @@ id,title,status
 
 ---
 
+## Verification Stack
+
+Hive provides a three-layer verification pyramid for building robust applications with runtime validation and comprehensive testing.
+
+### Refinement Types
+
+Use refinement types from `hive.types` for automatic validation in command signatures:
+
+```python
+from hive import command, App
+from hive.types import PositiveInt, Percentage, Port, NonEmptyStr, Email
+
+app = App("myapp")
+
+@command(app)
+async def create_user(
+    ctx,
+    name: NonEmptyStr,
+    email: Email,
+    age: PositiveInt,
+    completion: Percentage = 0.0,
+) -> User:
+    """Create a user with validated inputs."""
+    ...
+```
+
+Invalid inputs are caught immediately with user-friendly error messages:
+
+```bash
+$ myapp create-user "" "invalid" -5
+Error: name must be non-empty
+Error: email must be a valid email address
+Error: age must be a positive integer
+```
+
+**Available Refinement Types:**
+
+| Category | Types |
+|----------|-------|
+| Numeric | `PositiveInt`, `NonNegativeInt`, `NegativeInt`, `PositiveFloat`, `UnitInterval`, `Percentage`, `Probability` |
+| Domain | `Port` (1-65535), `HttpStatusCode` (100-599), `Year`, `Month`, `Day`, `Hour`, `Minute`, `Second` |
+| String | `NonEmptyStr`, `TrimmedStr`, `Identifier`, `Slug`, `Email`, `Url`, `FilePath`, `DirectoryPath` |
+
+### Contract Decorators
+
+Use `@requires` and `@ensures` from `hive.contracts` for explicit preconditions and postconditions:
+
+```python
+from hive import command, App
+from hive.contracts import requires, ensures
+
+app = App("myapp")
+
+@command(app)
+@requires(lambda ctx, task_id: task_id > 0, "Task ID must be positive")
+@ensures(lambda ctx, task_id, result: result.id == task_id, "Result ID must match input")
+async def get_task(ctx, task_id: int) -> Task:
+    """Fetch a task by ID."""
+    ...
+```
+
+Contract violations raise `CommandError` with clear messages:
+
+```bash
+$ myapp get-task 0
+Error: Precondition failed: Task ID must be positive
+```
+
+### Testing Utilities
+
+Use utilities from `hive.testing` for property-based testing and command testing:
+
+```python
+from hive.testing import TestClient, strategy_for_type
+from hive.types import PositiveInt, Email
+from hypothesis import given
+
+# Property-based testing with automatic strategy generation
+@given(x=strategy_for_type(PositiveInt))
+def test_always_positive(x):
+    assert x > 0
+
+@given(email=strategy_for_type(Email))
+def test_valid_emails(email):
+    assert "@" in email
+
+# Command testing with TestClient
+async def test_create_user():
+    async with TestClient(app) as client:
+        result = await client.invoke("create_user", name="Alice", email="alice@example.com", age=30)
+        assert result.name == "Alice"
+        assert client.db.add.called
+```
+
+**Test Generation:**
+
+Hive can generate tests automatically from your command definitions:
+
+```bash
+# Generate contract conformance tests
+hive test conformance
+
+# Generate property-based tests
+hive test properties
+```
+
+---
+
 ## Optional Interfaces
 
 By default, Hive generates CLI, TUI, and Python API interfaces. Two additional interfaces are available when needed.
@@ -342,7 +500,11 @@ app = App(
 Run the MCP server:
 
 ```bash
-myapp-mcp
+# Default stdio transport (for Claude Desktop)
+hive mcp serve
+
+# SSE transport for web-based agents
+hive mcp serve --transport sse --port 8080
 ```
 
 ### REST API
@@ -360,11 +522,17 @@ app = App(
 Run the API server:
 
 ```bash
-myapp-api
-# or: uvicorn myapp.api:app --port 8000
+# Start REST API server
+hive serve
+
+# With options
+hive serve --port 8000 --reload
+
+# With API key authentication
+hive serve --auth api_key
 ```
 
-OpenAPI documentation is available at `/docs`.
+OpenAPI documentation is automatically generated and available at `/docs`.
 
 ---
 
@@ -373,19 +541,34 @@ OpenAPI documentation is available at `/docs`.
 Hive provides a CLI for project management:
 
 ```bash
-hive new <name>        # Create a new project
-hive dev               # Start development server with hot reload
-hive build             # Build distribution packages
-hive publish           # Publish to PyPI
+# Project Management
+hive new <name>                  # Create a new project
+hive new <name> --features tui,mcp,rest  # With optional features
+hive dev                         # Start development server with hot reload
+hive build                       # Build distribution packages
+hive publish                     # Publish to PyPI
 
-hive db migrate <msg>  # Generate database migration
-hive db upgrade        # Apply pending migrations
-hive db reset          # Reset database
+# Specification Tools
+hive spec export                 # Export specification as JSON Schema
+hive spec export --format toml   # Export as TOML
+hive spec export -o spec.json    # Export to file
+hive spec diff <a> <b>           # Compare specifications between versions
+hive spec diff <a> <b> --fail-on-breaking  # CI mode (exit 1 on breaking changes)
 
-hive spec export       # Export specification as JSON Schema
-hive spec diff <a> <b> # Compare specifications between versions
+# Documentation
+hive docs generate               # Generate markdown documentation
+hive docs generate --format manpage  # Generate Unix man pages
+hive docs generate -o docs/      # Output to directory
 
-hive docs generate     # Generate documentation from spec
+# Test Generation
+hive test conformance            # Generate contract conformance tests
+hive test properties             # Generate property-based tests with Hypothesis
+
+# Optional Interfaces
+hive mcp serve                   # Start MCP server (stdio transport)
+hive mcp serve --transport sse --port 8080  # SSE transport
+hive serve                       # Start REST API server
+hive serve --port 8000 --reload  # With hot reload
 ```
 
 ---
@@ -400,6 +583,10 @@ Hive builds on a carefully selected set of libraries that share philosophical al
 | TUI | [Textual](https://textual.textualize.io/) | Terminal user interface framework |
 | Data | [SQLModel](https://sqlmodel.tiangolo.com/) | Type-safe ORM (Pydantic + SQLAlchemy) |
 | Database | SQLite (default) | Embedded database; DuckDB and PostgreSQL also supported |
+| Validation | [beartype](https://beartype.readthedocs.io/) | Runtime type enforcement for refinement types |
+| Contracts | [deal](https://deal.readthedocs.io/) | Design-by-contract decorators |
+| Testing | [Hypothesis](https://hypothesis.readthedocs.io/) | Property-based testing with auto-generated strategies |
+| HTTP | [httpx](https://www.python-httpx.org/) | Modern async HTTP client for services |
 | MCP | [FastMCP](https://github.com/jlowin/fastmcp) | MCP server generation (optional) |
 | REST | [FastAPI](https://fastapi.tiangolo.com/) | REST API generation (optional) |
 
@@ -422,9 +609,10 @@ Full documentation is available at [hive.dev/docs](https://hive.dev/docs).
 
 The [examples](./examples) directory contains complete sample applications:
 
-- **todo** — Simple task list demonstrating core patterns
-- **api-client** — Application integrating with an external API
-- **analytics** — Data analysis app using DuckDB
+- **minimal** — Simplest possible Hive app demonstrating basic command definition and testing
+- **crud** — Complete CRUD task manager with entities, commands, queries, contracts, and refinement types
+- **api-client** — External API integration with services, credential management, and httpx
+- **analytics** — Data analysis application using DuckDB with rich terminal output
 
 ---
 
@@ -434,17 +622,31 @@ Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for 
 
 The framework core is in `src/hive/`. Key areas:
 
-- `src/hive/core/` — Specification parsing and registry
-- `src/hive/generators/` — CLI, TUI, and artifact generators
-- `src/hive/runtime/` — Execution context and database layer
+- `src/hive/core/` — Specification parsing, registry, and decorators
+- `src/hive/types/` — Refinement types with beartype validation
+- `src/hive/contracts/` — Design-by-contract decorators
+- `src/hive/testing/` — Test utilities and Hypothesis strategies
+- `src/hive/generators/` — CLI, TUI, MCP, REST, and schema generators
+- `src/hive/runtime/` — Execution context, database layer, and services
+- `src/hive/spec/` — Specification export and diffing
+- `src/hive/docs/` — Documentation generation
 
 To set up a development environment:
 
 ```bash
 git clone https://github.com/yourusername/hive.git
 cd hive
-pip install -e ".[dev]"
-pytest
+uv sync --dev
+uv run pytest
+```
+
+Run the full quality suite:
+
+```bash
+uv run ruff check .              # Linting
+uv run ruff format .             # Formatting
+uv run pyright                   # Type checking
+uv run pytest --cov=src/hive     # Tests with coverage
 ```
 
 ---
