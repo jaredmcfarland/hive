@@ -119,15 +119,16 @@ class Task(SQLModel, table=True):
 Use SQLModel's `Field` to define column attributes:
 
 ```python
+from datetime import UTC, datetime
+
 from sqlmodel import Field, SQLModel
-from datetime import datetime
 
 @entity(app)
 class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     priority: int = Field(default=1, ge=1, le=5)
 ```
 

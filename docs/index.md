@@ -46,7 +46,7 @@ async def list_tasks(ctx, include_done: bool = False) -> list[Task]:
     """List all tasks."""
     query = select(Task)
     if not include_done:
-        query = query.where(Task.done == False)
+        query = query.where(Task.done.is_(False))
     return await ctx.db.exec(query).all()
 ```
 

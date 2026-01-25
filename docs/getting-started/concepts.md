@@ -254,7 +254,7 @@ user = await ctx.db.get(User, user_id)
 
 # Execute queries
 from sqlmodel import select
-statement = select(User).where(User.active == True)
+statement = select(User).where(User.active.is_(True))
 result = await ctx.db.exec(statement)
 users = result.all()
 

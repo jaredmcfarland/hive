@@ -39,7 +39,7 @@ Open `src/myapp/app.py` and replace its contents:
 ```python
 """A simple task manager built with Hive."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 from pydantic import Field
@@ -60,7 +60,7 @@ class Task(SQLModel, table=True):
     title: str = Field(description="Task title")
     completed: bool = Field(default=False, description="Whether task is done")
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         description="When the task was created"
     )
 
@@ -123,7 +123,7 @@ async def list_tasks(ctx, show_completed: bool = False) -> list[Task]:
 
     statement = select(Task)
     if not show_completed:
-        statement = statement.where(Task.completed == False)  # noqa: E712
+        statement = statement.where(Task.completed.is_(False))
 
     result = await ctx.db.exec(statement)
     return list(result.all())

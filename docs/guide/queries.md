@@ -214,7 +214,7 @@ async def task_stats(ctx) -> dict:
     """Get task statistics."""
     total = await ctx.db.execute(select(func.count(Task.id)))
     completed = await ctx.db.execute(
-        select(func.count(Task.id)).where(Task.completed == True)
+        select(func.count(Task.id)).where(Task.completed.is_(True))
     )
 
     return {

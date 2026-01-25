@@ -146,7 +146,7 @@ if errors:
 ```python
 from hive import App, command, query, entity
 from hive.types import PositiveInt, NonEmptyStr
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, select
 
 app = App(
     name="task-manager",
@@ -181,10 +181,11 @@ async def complete_task(ctx, task_id: PositiveInt) -> Task:
 @query(app, entities=[Task])
 async def list_tasks(ctx, completed: bool | None = None) -> list[Task]:
     """List tasks, optionally filtered by completion status."""
-    query = ctx.db.query(Task)
+    statement = select(Task)
     if completed is not None:
-        query = query.filter(Task.completed == completed)
-    return await query.all()
+        statement = statement.where(Task.completed.is_(completed))
+    result = await ctx.db.exec(statement)
+    return list(result.all())
 
 if __name__ == "__main__":
     # Validate before running

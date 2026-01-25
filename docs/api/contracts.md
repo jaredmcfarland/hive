@@ -110,13 +110,18 @@ async def withdraw(ctx, amount: float) -> Account:
 ```python
 @command(app)
 @requires(lambda ctx, user_id: user_id > 0, "User ID must be positive")
-@requires(lambda ctx, user_id: ctx.db.exists(User, user_id), "User must exist")
+@requires(lambda ctx, user_id: isinstance(user_id, int), "User ID must be integer")
 @ensures(lambda ctx, user_id, result: result is not None, "Must return a user")
 @ensures(lambda ctx, user_id, result: result.id == user_id, "Must return correct user")
 async def get_user(ctx, user_id: int) -> User:
     """Get a user by ID with full contract validation."""
     ...
 ```
+
+!!! note "Async Limitations"
+    Preconditions run synchronously before the async command executes. Database
+    existence checks cannot be performed in `@requires` lambdas. Instead, perform
+    such checks inside the command body and raise `CommandError` if validation fails.
 
 ## @invariant
 
