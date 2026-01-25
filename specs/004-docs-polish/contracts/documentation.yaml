@@ -1,0 +1,95 @@
+# Documentation Generation API Contract
+# OpenAPI 3.1 specification for hive docs CLI command
+
+openapi: "3.1.0"
+info:
+  title: Hive Documentation Generation
+  version: "1.0.0"
+  description: CLI interface for generating documentation from Hive specifications
+
+paths:
+  /cli/docs/generate:
+    post:
+      operationId: generate_docs
+      summary: Generate documentation from Hive application
+      description: |
+        Generates markdown or man page documentation from the application's
+        registered commands, queries, and entities.
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [markdown, manpage]
+            default: markdown
+          description: Output format
+        - name: output
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Output directory (stdout if not specified)
+        - name: include-private
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include private commands in output
+      responses:
+        "200":
+          description: Documentation generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentationOutput"
+        "400":
+          description: Invalid format or output path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    DocumentationOutput:
+      type: object
+      required:
+        - files_generated
+        - commands_documented
+        - queries_documented
+        - entities_documented
+      properties:
+        files_generated:
+          type: array
+          items:
+            type: string
+          description: Paths to generated files
+        commands_documented:
+          type: integer
+          minimum: 0
+        queries_documented:
+          type: integer
+          minimum: 0
+        entities_documented:
+          type: integer
+          minimum: 0
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Warnings encountered during generation
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message

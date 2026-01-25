@@ -1,0 +1,155 @@
+# Testing Utilities API Contract
+# Python interface specification for TestClient and generators
+
+openapi: "3.1.0"
+info:
+  title: Hive Testing Utilities
+  version: "1.0.0"
+  description: Python API for testing Hive applications
+
+paths:
+  /testing/client/invoke:
+    post:
+      operationId: testclient_invoke
+      summary: Invoke a command through TestClient
+      parameters:
+        - name: command_name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Name of the command to invoke
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Command parameters
+      responses:
+        "200":
+          description: Command executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvocationResult"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "404":
+          description: Command not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /testing/conformance/generate:
+    post:
+      operationId: generate_conformance_tests
+      summary: Generate conformance tests from contracts
+      parameters:
+        - name: output_path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Path for generated test file
+      responses:
+        "200":
+          description: Tests generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationResult"
+
+  /testing/properties/generate:
+    post:
+      operationId: generate_property_tests
+      summary: Generate property-based tests from type hints
+      parameters:
+        - name: output_path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Path for generated test file
+      responses:
+        "200":
+          description: Tests generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationResult"
+
+components:
+  schemas:
+    InvocationResult:
+      type: object
+      required:
+        - success
+        - result
+      properties:
+        success:
+          type: boolean
+        result:
+          description: Command return value (type varies)
+        output:
+          type: array
+          items:
+            type: string
+          description: Captured output lines
+
+    ValidationError:
+      type: object
+      required:
+        - error
+        - field
+        - message
+      properties:
+        error:
+          type: string
+          const: validation_error
+        field:
+          type: string
+          description: Parameter that failed validation
+        message:
+          type: string
+          description: Validation error message
+        constraint:
+          type: string
+          description: Constraint that was violated
+
+    GenerationResult:
+      type: object
+      required:
+        - output_path
+        - tests_generated
+      properties:
+        output_path:
+          type: string
+        tests_generated:
+          type: integer
+          minimum: 0
+        commands_covered:
+          type: array
+          items:
+            type: string
+        queries_covered:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
