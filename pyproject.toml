@@ -69,6 +69,14 @@ rest = [
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
 ]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "mkdocs-typer>=0.0.3",
+    "mkdocs-llmstxt>=0.2.0",
+    "mkdocs-llmstxt-md>=0.1.0",
+]
 dev = [
     # Static analysis
     "pyright>=1.1.390",
