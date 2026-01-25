@@ -12,10 +12,13 @@ Usage:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from rich.console import Console
 import typer
+
+if TYPE_CHECKING:
+    from hive.app import App
 
 # Create the docs CLI app
 docs_app = typer.Typer(
@@ -165,7 +168,7 @@ def generate_command(
     raise typer.Exit(code=0)
 
 
-def _get_current_app() -> App:  # type: ignore[name-defined]  # noqa: F821
+def _get_current_app() -> App:
     """Get the current project's App instance.
 
     Discovers the app by searching common module locations.

@@ -247,3 +247,106 @@ class TestJinjaFilters:
 
         result = troff_escape("use --help")
         assert "\\-" in result
+
+
+class TestContractDocumentation:
+    """Unit tests for contract documentation extraction."""
+
+    def test_get_contracts_extracts_requires(self) -> None:
+        """_get_contracts extracts @requires contract messages."""
+        from hive.app import App
+        from hive.contracts import requires
+        from hive.core.decorators import command
+        from hive.docs import MarkdownGenerator
+        from hive.runtime.context import ExecutionContext
+
+        app = App("test-app")
+
+        @command(app)
+        @requires(lambda ctx, x: x > 0, "x must be positive")
+        async def positive_cmd(ctx: ExecutionContext, x: int) -> int:
+            """Command requiring positive input."""
+            return x
+
+        generator = MarkdownGenerator(app)
+        contracts = generator._get_contracts("positive_cmd")
+
+        assert "x must be positive" in contracts["requires"]
+        assert len(contracts["ensures"]) == 0
+
+    def test_get_contracts_extracts_ensures(self) -> None:
+        """_get_contracts extracts @ensures contract messages."""
+        from hive.app import App
+        from hive.contracts import ensures
+        from hive.core.decorators import command
+        from hive.docs import MarkdownGenerator
+        from hive.runtime.context import ExecutionContext
+
+        app = App("test-app")
+
+        @command(app)
+        @ensures(lambda ctx, x, result: result >= x, "result must be >= input")
+        async def double_cmd(ctx: ExecutionContext, x: int) -> int:
+            """Command that doubles input."""
+            return x * 2
+
+        generator = MarkdownGenerator(app)
+        contracts = generator._get_contracts("double_cmd")
+
+        assert "result must be >= input" in contracts["ensures"]
+        assert len(contracts["requires"]) == 0
+
+    def test_get_contracts_extracts_both(self) -> None:
+        """_get_contracts extracts both @requires and @ensures."""
+        from hive.app import App
+        from hive.contracts import ensures, requires
+        from hive.core.decorators import command
+        from hive.docs import MarkdownGenerator
+        from hive.runtime.context import ExecutionContext
+
+        app = App("test-app")
+
+        @command(app)
+        @requires(lambda ctx, x: x > 0, "input must be positive")
+        @ensures(lambda ctx, x, result: result > x, "result must be greater than input")
+        async def increment_cmd(ctx: ExecutionContext, x: int) -> int:
+            """Command that increments input."""
+            return x + 1
+
+        generator = MarkdownGenerator(app)
+        contracts = generator._get_contracts("increment_cmd")
+
+        assert "input must be positive" in contracts["requires"]
+        assert "result must be greater than input" in contracts["ensures"]
+
+    def test_get_contracts_empty_for_no_contracts(self) -> None:
+        """_get_contracts returns empty lists for commands without contracts."""
+        from hive.app import App
+        from hive.core.decorators import command
+        from hive.docs import MarkdownGenerator
+        from hive.runtime.context import ExecutionContext
+
+        app = App("test-app")
+
+        @command(app)
+        async def simple_cmd(ctx: ExecutionContext) -> str:
+            """Command without contracts."""
+            return "simple"
+
+        generator = MarkdownGenerator(app)
+        contracts = generator._get_contracts("simple_cmd")
+
+        assert contracts["requires"] == []
+        assert contracts["ensures"] == []
+
+    def test_get_contracts_returns_empty_for_unknown_command(self) -> None:
+        """_get_contracts returns empty lists for unknown commands."""
+        from hive.app import App
+        from hive.docs import MarkdownGenerator
+
+        app = App("test-app")
+        generator = MarkdownGenerator(app)
+        contracts = generator._get_contracts("nonexistent_cmd")
+
+        assert contracts["requires"] == []
+        assert contracts["ensures"] == []

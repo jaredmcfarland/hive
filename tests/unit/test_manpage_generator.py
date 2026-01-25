@@ -327,3 +327,101 @@ class TestManPageFilters:
 
         assert first_line("") == ""
         assert first_line(None) == ""  # type: ignore[arg-type]
+
+
+class TestManPageContractDocumentation:
+    """Unit tests for contract documentation extraction in man pages."""
+
+    def test_get_contracts_extracts_requires(self) -> None:
+        """_get_contracts extracts @requires contract messages."""
+        from hive.app import App
+        from hive.contracts import requires
+        from hive.core.decorators import command
+        from hive.docs.manpage import ManPageGenerator
+
+        app = App("test-app")
+
+        @command(app)
+        @requires(lambda ctx, x: x > 0, "x must be positive")
+        async def positive_cmd(ctx, x: int) -> int:
+            """Command requiring positive input."""
+            return x
+
+        generator = ManPageGenerator(app)
+        contracts = generator._get_contracts("positive_cmd")
+
+        assert "x must be positive" in contracts["requires"]
+        assert len(contracts["ensures"]) == 0
+
+    def test_get_contracts_extracts_ensures(self) -> None:
+        """_get_contracts extracts @ensures contract messages."""
+        from hive.app import App
+        from hive.contracts import ensures
+        from hive.core.decorators import command
+        from hive.docs.manpage import ManPageGenerator
+
+        app = App("test-app")
+
+        @command(app)
+        @ensures(lambda ctx, x, result: result >= x, "result must be >= input")
+        async def double_cmd(ctx, x: int) -> int:
+            """Command that doubles input."""
+            return x * 2
+
+        generator = ManPageGenerator(app)
+        contracts = generator._get_contracts("double_cmd")
+
+        assert "result must be >= input" in contracts["ensures"]
+        assert len(contracts["requires"]) == 0
+
+    def test_get_contracts_extracts_both(self) -> None:
+        """_get_contracts extracts both @requires and @ensures."""
+        from hive.app import App
+        from hive.contracts import ensures, requires
+        from hive.core.decorators import command
+        from hive.docs.manpage import ManPageGenerator
+
+        app = App("test-app")
+
+        @command(app)
+        @requires(lambda ctx, x: x > 0, "input must be positive")
+        @ensures(lambda ctx, x, result: result > x, "result must be greater than input")
+        async def increment_cmd(ctx, x: int) -> int:
+            """Command that increments input."""
+            return x + 1
+
+        generator = ManPageGenerator(app)
+        contracts = generator._get_contracts("increment_cmd")
+
+        assert "input must be positive" in contracts["requires"]
+        assert "result must be greater than input" in contracts["ensures"]
+
+    def test_contracts_included_in_output(self) -> None:
+        """Contracts appear in generated man page output."""
+        from hive.app import App
+        from hive.contracts import requires
+        from hive.core.decorators import command
+        from hive.docs.manpage import ManPageGenerator
+        from hive.docs.models import DocumentationConfig
+
+        app = App("test-app")
+
+        @command(app)
+        @requires(lambda ctx, x: x > 0, "Value must be positive")
+        async def validated_cmd(ctx, x: int) -> int:
+            """Command with validation."""
+            return x
+
+        generator = ManPageGenerator(app)
+        config = DocumentationConfig(
+            format="manpage",
+            output_dir=None,
+            include_contracts=True,
+        )
+
+        result = generator.generate(config)
+        content = result.content or ""
+
+        # Check contracts section appears
+        assert ".SH CONTRACTS" in content
+        assert "Value must be positive" in content

@@ -18,31 +18,7 @@ import inspect
 import textwrap
 from typing import TYPE_CHECKING, Any, get_type_hints
 
-from hive.types import (
-    Day,
-    Email,
-    FilePath,
-    Hour,
-    HttpStatusCode,
-    Identifier,
-    Minute,
-    Month,
-    NegativeInt,
-    NonEmptyStr,
-    NonNegativeFloat,
-    NonNegativeInt,
-    Percentage,
-    Port,
-    PositiveFloat,
-    PositiveInt,
-    Probability,
-    Second,
-    Slug,
-    TrimmedStr,
-    UnitInterval,
-    Url,
-    Year,
-)
+import hive.types as hive_types
 
 if TYPE_CHECKING:
     from hive.app import App
@@ -89,7 +65,6 @@ SUPPORTED_REFINEMENT_TYPES = {
     "NegativeInt",
     "PositiveFloat",
     "NonNegativeFloat",
-    "NegativeFloat",
     "UnitInterval",
     "Percentage",
     "Probability",
@@ -113,29 +88,29 @@ SUPPORTED_REFINEMENT_TYPES = {
 # Mapping from actual type objects to their names
 # This is needed because Annotated types don't have __name__
 REFINEMENT_TYPE_MAP: dict[Any, str] = {
-    PositiveInt: "PositiveInt",
-    NonNegativeInt: "NonNegativeInt",
-    NegativeInt: "NegativeInt",
-    PositiveFloat: "PositiveFloat",
-    NonNegativeFloat: "NonNegativeFloat",
-    UnitInterval: "UnitInterval",
-    Percentage: "Percentage",
-    Probability: "Probability",
-    Port: "Port",
-    HttpStatusCode: "HttpStatusCode",
-    Year: "Year",
-    Month: "Month",
-    Day: "Day",
-    Hour: "Hour",
-    Minute: "Minute",
-    Second: "Second",
-    NonEmptyStr: "NonEmptyStr",
-    TrimmedStr: "TrimmedStr",
-    Identifier: "Identifier",
-    Slug: "Slug",
-    Email: "Email",
-    Url: "Url",
-    FilePath: "FilePath",
+    hive_types.PositiveInt: "PositiveInt",
+    hive_types.NonNegativeInt: "NonNegativeInt",
+    hive_types.NegativeInt: "NegativeInt",
+    hive_types.PositiveFloat: "PositiveFloat",
+    hive_types.NonNegativeFloat: "NonNegativeFloat",
+    hive_types.UnitInterval: "UnitInterval",
+    hive_types.Percentage: "Percentage",
+    hive_types.Probability: "Probability",
+    hive_types.Port: "Port",
+    hive_types.HttpStatusCode: "HttpStatusCode",
+    hive_types.Year: "Year",
+    hive_types.Month: "Month",
+    hive_types.Day: "Day",
+    hive_types.Hour: "Hour",
+    hive_types.Minute: "Minute",
+    hive_types.Second: "Second",
+    hive_types.NonEmptyStr: "NonEmptyStr",
+    hive_types.TrimmedStr: "TrimmedStr",
+    hive_types.Identifier: "Identifier",
+    hive_types.Slug: "Slug",
+    hive_types.Email: "Email",
+    hive_types.Url: "Url",
+    hive_types.FilePath: "FilePath",
 }
 
 
@@ -218,8 +193,6 @@ class PropertyGenerator:
         params = []
 
         # Build a namespace that includes hive.types for resolving type hints
-        import hive.types as hive_types
-
         globalns = getattr(func, "__globals__", {}).copy()
         # Add all exported names from hive.types to the namespace
         for name in hive_types.__all__:

@@ -279,42 +279,36 @@ class MarkdownGenerator(BaseDocumentationGenerator):
         contracts: dict[str, list[str]] = {"requires": [], "ensures": []}
 
         # Try to get the command or query registration
-        cmd_reg = None
-        query_reg = None
+        target_reg = None
 
         for reg in self.app.registry.list_commands():
             if reg.name == name:
-                cmd_reg = reg
+                target_reg = reg
                 break
 
-        if cmd_reg is None:
+        if target_reg is None:
             for reg in self.app.registry.list_queries():
                 if reg.name == name:
-                    query_reg = reg
+                    target_reg = reg
                     break
 
-        target = cmd_reg or query_reg
-        if target is None:
+        if target_reg is None:
             return contracts
 
         # Extract contracts from the function
-        func = target.func
+        func = target_reg.func
 
-        # Check for deal contracts stored as attributes
-        # Use getattr to access dynamic attributes set by deal
-        deal_pre = getattr(func, "__deal_pre__", None)
-        if deal_pre is not None:
-            for pre in deal_pre:
-                deal_msg = getattr(pre, "__deal_message__", None)
-                if deal_msg is not None:
-                    contracts["requires"].append(deal_msg)
+        # Check for @requires contracts stored by our decorator
+        requires_list = getattr(func, "__hive_requires__", [])
+        for req in requires_list:
+            if req.get("message"):
+                contracts["requires"].append(req["message"])
 
-        deal_post = getattr(func, "__deal_post__", None)
-        if deal_post is not None:
-            for post in deal_post:
-                deal_msg = getattr(post, "__deal_message__", None)
-                if deal_msg is not None:
-                    contracts["ensures"].append(deal_msg)
+        # Check for @ensures contracts stored by our decorator
+        ensures_list = getattr(func, "__hive_ensures__", [])
+        for ens in ensures_list:
+            if ens.get("message"):
+                contracts["ensures"].append(ens["message"])
 
         return contracts
 

@@ -211,20 +211,17 @@ class ManPageGenerator(BaseDocumentationGenerator):
             if reg.name == name:
                 func = reg.func
 
-                # Check for deal contracts stored as attributes
-                deal_pre = getattr(func, "__deal_pre__", None)
-                if deal_pre is not None:
-                    for pre in deal_pre:
-                        deal_msg = getattr(pre, "__deal_message__", None)
-                        if deal_msg is not None:
-                            contracts["requires"].append(deal_msg)
+                # Check for @requires contracts stored by our decorator
+                requires_list = getattr(func, "__hive_requires__", [])
+                for req in requires_list:
+                    if req.get("message"):
+                        contracts["requires"].append(req["message"])
 
-                deal_post = getattr(func, "__deal_post__", None)
-                if deal_post is not None:
-                    for post in deal_post:
-                        deal_msg = getattr(post, "__deal_message__", None)
-                        if deal_msg is not None:
-                            contracts["ensures"].append(deal_msg)
+                # Check for @ensures contracts stored by our decorator
+                ensures_list = getattr(func, "__hive_ensures__", [])
+                for ens in ensures_list:
+                    if ens.get("message"):
+                        contracts["ensures"].append(ens["message"])
                 break
 
         return contracts
