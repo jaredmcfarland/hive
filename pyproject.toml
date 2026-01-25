@@ -542,7 +542,7 @@ layers = [
 # =============================================================================
 
 [tool.bandit]
-exclude_dirs = ["tests", ".venv", "venv"]
+exclude_dirs = ["tests", ".venv", "venv", "examples"]
 skips = []
 
 [tool.bandit.assert_used]

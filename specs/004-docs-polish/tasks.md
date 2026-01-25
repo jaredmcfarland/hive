@@ -163,24 +163,24 @@
 
 ### API Client Example
 
-- [ ] T062 [P] [US5] Create examples/api-client/pyproject.toml with hive and httpx
-- [ ] T063 [P] [US5] Create examples/api-client/README.md with service integration guide
-- [ ] T064 [US5] Implement @service decorated client in examples/api-client/src/api_client/services.py
-- [ ] T065 [US5] Implement commands using service in examples/api-client/src/api_client/commands.py
-- [ ] T066 [US5] Add credential management demo in examples/api-client/src/api_client/
-- [ ] T067 [US5] Add tests with service mocking in examples/api-client/tests/
-- [ ] T068 [US5] Verify ruff/pyright/pytest pass for examples/api-client/
+- [x] T062 [P] [US5] Create examples/api-client/pyproject.toml with hive and httpx
+- [x] T063 [P] [US5] Create examples/api-client/README.md with service integration guide
+- [x] T064 [US5] Implement @service decorated client in examples/api-client/src/api_client/services.py
+- [x] T065 [US5] Implement commands using service in examples/api-client/src/api_client/commands.py
+- [x] T066 [US5] Add credential management demo in examples/api-client/src/api_client/
+- [x] T067 [US5] Add tests with service mocking in examples/api-client/tests/
+- [x] T068 [US5] Verify ruff/pyright/pytest pass for examples/api-client/
 
 ### Analytics Example
 
-- [ ] T069 [P] [US5] Create examples/analytics/pyproject.toml with hive and duckdb
-- [ ] T070 [P] [US5] Create examples/analytics/README.md with DuckDB usage guide
-- [ ] T071 [US5] Implement DataPoint and Report entities in examples/analytics/src/analytics/entities.py
-- [ ] T072 [US5] Implement import/query commands in examples/analytics/src/analytics/commands.py
-- [ ] T073 [US5] Configure DuckDB as database backend in examples/analytics/src/analytics/
-- [ ] T074 [US5] Add rich output formatting in examples/analytics/src/analytics/
-- [ ] T075 [US5] Add tests in examples/analytics/tests/
-- [ ] T076 [US5] Verify ruff/pyright/pytest pass for examples/analytics/
+- [x] T069 [P] [US5] Create examples/analytics/pyproject.toml with hive and duckdb
+- [x] T070 [P] [US5] Create examples/analytics/README.md with DuckDB usage guide
+- [x] T071 [US5] Implement DataPoint and Report entities in examples/analytics/src/analytics/entities.py
+- [x] T072 [US5] Implement import/query commands in examples/analytics/src/analytics/commands.py
+- [x] T073 [US5] Configure DuckDB as database backend in examples/analytics/src/analytics/
+- [x] T074 [US5] Add rich output formatting in examples/analytics/src/analytics/
+- [x] T075 [US5] Add tests in examples/analytics/tests/
+- [x] T076 [US5] Verify ruff/pyright/pytest pass for examples/analytics/
 
 **Checkpoint**: All 4 examples run independently with passing tests
 
