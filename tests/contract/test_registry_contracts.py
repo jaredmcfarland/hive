@@ -15,7 +15,7 @@ class TestRegistryContracts:
 
         reg = CommandRegistration(
             name="",  # Empty name
-            func=lambda ctx: None,  # noqa: ARG005
+            func=lambda ctx: None,
             parameters=[],
             return_type=None,
             docstring=None,

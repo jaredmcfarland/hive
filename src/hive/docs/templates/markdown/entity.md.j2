@@ -1,0 +1,47 @@
+{# Template for entity documentation #}
+## {{ entity.name }}
+
+{% if entity.description %}
+{{ entity.description }}
+{% else %}
+*No description available.*
+{% endif %}
+
+**Table**: `{{ entity.table_name }}`
+
+### Fields
+
+{% if entity.fields %}
+| Field | Type | Nullable | Primary Key | Default | Description |
+|-------|------|----------|-------------|---------|-------------|
+{% for field in entity.fields %}
+| `{{ field.name }}` | {{ field.type | format_type }} | {{ "Yes" if field.nullable else "No" }} | {{ "Yes" if field.primary_key else "No" }} | {{ field.default | format_default if field.default is not none else "-" }} | {{ field.description or "-" }} |
+{% endfor %}
+
+{% for field in entity.fields %}
+{% set constraints = field | format_constraints %}
+{% if constraints %}
+- **{{ field.name }}**: {{ constraints }}
+{% endif %}
+{% endfor %}
+{% else %}
+*No fields defined.*
+{% endif %}
+
+{% if entity.relationships %}
+### Relationships
+
+{% for rel in entity.relationships %}
+- **{{ rel.field_name }}** → `{{ rel.target_entity }}` ({{ rel.relationship_type }}, FK: `{{ rel.foreign_key }}`)
+{% endfor %}
+{% endif %}
+
+{% if invariants %}
+### Invariants
+
+{% for inv in invariants %}
+- {{ inv }}
+{% endfor %}
+{% endif %}
+
+---

@@ -1,0 +1,1 @@
+"""Man page documentation templates."""

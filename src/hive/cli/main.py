@@ -2,7 +2,7 @@
 
 This module provides the main CLI application for the Hive framework,
 exposing subcommands for specification export, MCP server, REST API,
-and project management.
+documentation generation, test generation, and project management.
 
 Usage:
     hive --help
@@ -10,6 +10,9 @@ Usage:
     hive spec diff v1.json v2.json
     hive mcp serve
     hive serve
+    hive docs generate --format markdown
+    hive test generate-conformance
+    hive test generate-properties
     hive new myproject
     hive dev
 """
@@ -65,14 +68,18 @@ def main(
 
 
 # Import and register subcommand groups (after app creation to avoid circular imports)
+from hive.cli.docs import docs_app  # noqa: E402
 from hive.cli.mcp import mcp_app  # noqa: E402
 from hive.cli.project import project_app  # noqa: E402
 from hive.cli.serve import serve_app  # noqa: E402
 from hive.cli.spec import spec_app  # noqa: E402
+from hive.cli.test import test_app  # noqa: E402
 
 app.add_typer(spec_app, name="spec")
 app.add_typer(mcp_app, name="mcp")
 app.add_typer(serve_app, name="serve")
+app.add_typer(docs_app, name="docs")
+app.add_typer(test_app, name="test")
 
 # Register project commands at root level (hive new, hive dev, etc.)
 app.add_typer(project_app, name="project")

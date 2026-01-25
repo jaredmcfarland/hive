@@ -39,6 +39,13 @@ def requires(condition: Callable[..., bool], message: str = "") -> Callable[[F],
                 raise CommandError(message or "Precondition failed", exit_code=1)
             return await func(*args, **kwargs)
 
+        # Store contract metadata for introspection
+        existing_requires: list[dict[str, Any]] = getattr(func, "__hive_requires__", [])
+        wrapper.__hive_requires__ = [  # type: ignore[attr-defined]
+            *existing_requires,
+            {"condition": condition, "message": message},
+        ]
+
         return wrapper  # type: ignore[return-value]
 
     return decorator
@@ -69,6 +76,13 @@ def ensures(condition: Callable[..., bool], message: str = "") -> Callable[[F], 
             if not condition(*args, result=result, **kwargs):
                 raise CommandError(message or "Postcondition failed", exit_code=70)
             return result
+
+        # Store contract metadata for introspection
+        existing_ensures: list[dict[str, Any]] = getattr(func, "__hive_ensures__", [])
+        wrapper.__hive_ensures__ = [  # type: ignore[attr-defined]
+            *existing_ensures,
+            {"condition": condition, "message": message},
+        ]
 
         return wrapper  # type: ignore[return-value]
 

@@ -13,7 +13,7 @@ class TestRequiresDecorator:
         """@requires allows execution when condition is True."""
         from hive.contracts import requires
 
-        @requires(lambda ctx, x: x > 0, "x must be positive")  # noqa: ARG005
+        @requires(lambda ctx, x: x > 0, "x must be positive")
         async def fn(ctx, x: int) -> int:
             return x * 2
 
@@ -25,7 +25,7 @@ class TestRequiresDecorator:
         """@requires raises CommandError when condition is False."""
         from hive.contracts import requires
 
-        @requires(lambda ctx, x: x > 0, "x must be positive")  # noqa: ARG005
+        @requires(lambda ctx, x: x > 0, "x must be positive")
         async def fn(ctx, x: int) -> int:
             return x * 2
 
@@ -43,7 +43,7 @@ class TestEnsuresDecorator:
         """@ensures allows return when condition is True."""
         from hive.contracts import ensures
 
-        @ensures(lambda ctx, x, result: result > x, "result must be greater than input")  # noqa: ARG005
+        @ensures(lambda ctx, x, result: result > x, "result must be greater than input")
         async def fn(ctx, x: int) -> int:
             return x * 2
 
@@ -55,7 +55,7 @@ class TestEnsuresDecorator:
         """@ensures raises CommandError when postcondition is False."""
         from hive.contracts import ensures
 
-        @ensures(lambda ctx, x, result: result > x, "result must be greater than input")  # noqa: ARG005
+        @ensures(lambda ctx, x, result: result > x, "result must be greater than input")
         async def fn(ctx, x: int) -> int:
             return x  # Returns same value, not greater
 

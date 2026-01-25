@@ -49,6 +49,7 @@ repos:
           - deepdiff>=8.0.0
           - tomli-w>=1.0.0
           - fastmcp>=2.0,<3
+          - jinja2>=3.1.0
 
   # ---------------------------------------------------------------------------
   # Interrogate - Docstring Coverage

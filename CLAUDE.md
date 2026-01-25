@@ -62,6 +62,15 @@ uv run hive mcp serve --transport sse --port 8080  # SSE transport
 uv run hive serve                # Start REST API server
 uv run hive serve --port 8000 --reload  # With hot reload
 uv run hive serve --auth api_key # With API key authentication
+
+# Documentation generation
+uv run hive docs generate        # Generate markdown docs
+uv run hive docs generate --format manpage  # Generate man pages
+uv run hive docs generate -o docs/  # Output to directory
+
+# Test generation
+uv run hive test conformance     # Generate contract conformance tests
+uv run hive test properties      # Generate property-based tests
 ```
 
 ## Architecture
@@ -111,13 +120,25 @@ src/hive/
 │   └── decorators.py   # @requires, @ensures, @invariant
 ├── testing/            # Test utilities (hypothesis-based)
 │   ├── strategies.py   # strategy_for_type() auto-generation
-│   └── mocks.py        # MockExecutionContext
+│   ├── mocks.py        # MockExecutionContext
+│   ├── client.py       # TestClient for testing commands/queries
+│   ├── conformance.py  # ConformanceGenerator for contract tests
+│   └── properties.py   # PropertyGenerator for property tests
+├── docs/               # Documentation generation
+│   ├── base.py         # BaseDocumentationGenerator
+│   ├── markdown.py     # MarkdownGenerator for markdown docs
+│   ├── manpage.py      # ManPageGenerator for Unix man pages
+│   ├── filters.py      # Jinja2 filters for templates
+│   ├── models.py       # DocumentationConfig, DocumentationOutput
+│   └── templates/      # Jinja2 templates for docs
 ├── cli/                # CLI commands (hive <cmd>)
 │   ├── main.py         # CLI entrypoint and subcommand registration
 │   ├── spec.py         # hive spec export/diff commands
 │   ├── mcp.py          # hive mcp serve command
 │   ├── serve.py        # hive serve (REST API) command
-│   └── project.py      # hive new/dev/build/publish commands
+│   ├── project.py      # hive new/dev/build/publish commands
+│   ├── docs.py         # hive docs generate command
+│   └── test.py         # hive test conformance/properties commands
 ├── spec/               # Specification export and diffing
 │   ├── models.py       # Specification, CommandSchema, etc.
 │   ├── export.py       # build_specification(), export_specification()
@@ -174,6 +195,8 @@ Commands receive `ctx` with:
 - SQLite via SQLModel (existing infrastructure from Phase 1) (002-tui-services)
 - Python 3.12+ (enables type parameter syntax `class Foo[T]:`) (003-spec-distribution)
 - N/A (this phase generates artifacts, not data) (003-spec-distribution)
+- Python 3.12+ (per constitution and project requirements) (004-docs-polish)
+- SQLite (default), DuckDB (analytics example) (004-docs-polish)
 
 ## Development Tools (strict Python standards)
 - **uv** - Fast Python package manager and project tool
@@ -348,9 +371,9 @@ async def test_my_command():
 ```
 
 ## Recent Changes
+- 004-docs-polish: Added Python 3.12+ (per constitution and project requirements)
 - 003-spec-distribution: Added Python 3.12+ (enables type parameter syntax `class Foo[T]:`)
 - 002-tui-services: Added Python 3.12+ + Textual (TUI), keyring (credentials), httpx (HTTP client), existing: Typer, Rich, SQLModel, Pydantic
-- strict-python-tooling: Implemented strict Python development standards
   - Upgraded to Python 3.12+ (enables type parameter syntax)
   - Added uv as package manager with lockfile
   - Configured Ruff with full ruleset (`select = ["ALL"]`)
