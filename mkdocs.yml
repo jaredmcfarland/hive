@@ -1,0 +1,200 @@
+site_name: Hive Framework
+site_description: A Python framework for building terminal-agent-native applications
+site_author: Jared McFarland
+site_url: https://jaredmcfarland.github.io/hive/
+
+repo_name: jaredmcfarland/hive
+repo_url: https://github.com/jaredmcfarland/hive
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: amber
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: amber
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - header.autohide
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/hive.css
+
+extra_javascript:
+  - javascripts/copy-markdown.js
+
+plugins:
+  - search
+  - llmstxt-md:
+      # noklam's plugin - markdown URLs and copy buttons (llms.txt generation disabled)
+      enable_markdown_urls: true
+      enable_copy_button: true
+      enable_llms_txt: false
+      enable_llms_full: false
+      copy_button_text: "Copy markdown"
+      copy_button_position:
+        top: "85px"
+        right: "24px"
+      copy_button_style:
+        background: "transparent"
+        color: "rgba(255, 255, 255, 0.7)"
+        border: "1px solid rgba(255, 255, 255, 0.2)"
+        padding: "6px 12px"
+        border_radius: "6px"
+        font_size: "13px"
+        font_weight: "400"
+        font_family: "inherit"
+      sections:
+        Getting Started:
+          - index.md
+          - getting-started/installation.md
+          - getting-started/quickstart.md
+          - getting-started/concepts.md
+        User Guide:
+          - guide/decorators.md
+          - guide/commands.md
+          - guide/queries.md
+          - guide/entities.md
+          - guide/services.md
+          - guide/screens.md
+        API Reference:
+          - api/index.md
+          - api/app.md
+          - api/decorators.md
+          - api/types.md
+          - api/contracts.md
+          - api/testing.md
+        CLI Reference:
+          - cli/index.md
+          - cli/commands.md
+        Architecture:
+          - architecture/design.md
+          - architecture/generators.md
+          - architecture/runtime.md
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            docstring_style: google
+            docstring_section_style: spacy
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+            line_length: 80
+            members_order: source
+  - llmstxt:
+      # pawamoy's plugin - handles all llms.txt generation from HTML
+      full_output: llms-full.txt
+      markdown_description: |
+        Hive is a Python framework for building terminal-agent-native applications.
+        Generate CLI (Typer), TUI (Textual), and Python API interfaces from a single
+        decorated codebase. Optional MCP server (FastMCP) and REST API (FastAPI) generation.
+      sections:
+        Getting Started:
+          - index.md: "Project overview and key concepts"
+          - getting-started/installation.md: "Install with pip or uv"
+          - getting-started/quickstart.md: "First app in 5 minutes"
+          - getting-started/concepts.md: "Core concepts and architecture"
+        User Guide:
+          - guide/decorators.md: "Using @command, @query, @entity decorators"
+          - guide/commands.md: "Building state-modifying commands"
+          - guide/queries.md: "Building read-only queries"
+          - guide/entities.md: "Defining data models with SQLModel"
+          - guide/services.md: "External API clients with credentials"
+          - guide/screens.md: "TUI screens with Textual"
+        API Reference:
+          - api/index.md: "Python API overview"
+          - api/app.md: "App class - main entry point"
+          - api/decorators.md: "Decorator reference"
+          - api/types.md: "Refinement types"
+          - api/contracts.md: "Design-by-contract decorators"
+          - api/testing.md: "Testing utilities"
+        CLI Reference:
+          - cli/index.md: "CLI overview"
+          - cli/commands.md: "Complete command reference"
+        Architecture:
+          - architecture/design.md: "Three-layer architecture"
+          - architecture/generators.md: "Interface generators"
+          - architecture/runtime.md: "Execution context and services"
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+  - mkdocs-typer
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Concepts: getting-started/concepts.md
+  - User Guide:
+      - Decorators: guide/decorators.md
+      - Commands: guide/commands.md
+      - Queries: guide/queries.md
+      - Entities: guide/entities.md
+      - Services: guide/services.md
+      - Screens: guide/screens.md
+  - API Reference:
+      - Overview: api/index.md
+      - App: api/app.md
+      - Decorators: api/decorators.md
+      - Types: api/types.md
+      - Contracts: api/contracts.md
+      - Testing: api/testing.md
+  - CLI Reference:
+      - Overview: cli/index.md
+      - Commands: cli/commands.md
+  - Architecture:
+      - Design: architecture/design.md
+      - Generators: architecture/generators.md
+      - Runtime: architecture/runtime.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jaredmcfarland/hive
