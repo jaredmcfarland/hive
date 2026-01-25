@@ -157,7 +157,7 @@
 - [x] T056 [US5] Implement Task entity with refinement types in examples/crud/src/crud/entities.py
 - [x] T057 [US5] Implement CRUD commands with contracts in examples/crud/src/crud/commands.py
 - [x] T058 [US5] Implement list query in examples/crud/src/crud/queries.py
-- [ ] T059 [US5] Implement TUI screen in examples/crud/src/crud/screens.py (skipped - using in-memory storage)
+- [~] T059 [US5] Implement TUI screen in examples/crud/src/crud/screens.py (SKIPPED - example uses in-memory storage, TUI not applicable)
 - [x] T060 [US5] Add tests using TestClient in examples/crud/tests/
 - [x] T061 [US5] Verify ruff/pyright/pytest pass for examples/crud/
 
@@ -194,16 +194,16 @@
 
 ### Implementation for User Story 6
 
-- [ ] T077 [P] [US6] Create PropertyTestCase model in src/hive/testing/properties.py
-- [ ] T078 [US6] Implement type-to-strategy mapping using existing strategy_for_type in src/hive/testing/properties.py
-- [ ] T079 [US6] Implement property test generation for commands in src/hive/testing/properties.py
-- [ ] T080 [US6] Implement property test generation for queries in src/hive/testing/properties.py
-- [ ] T081 [US6] Add shrinking support configuration in src/hive/testing/properties.py
-- [ ] T082 [US6] Add `hive test generate-properties` CLI command in src/hive/cli/test.py
-- [ ] T083 [US6] Update src/hive/testing/__init__.py to export property generator
-- [ ] T084 [US6] Add unit tests in tests/unit/test_property_generator.py
+- [x] T077 [P] [US6] Create PropertyTestCase model in src/hive/testing/properties.py
+- [x] T078 [US6] Implement type-to-strategy mapping using existing strategy_for_type in src/hive/testing/properties.py
+- [x] T079 [US6] Implement property test generation for commands in src/hive/testing/properties.py
+- [x] T080 [US6] Implement property test generation for queries in src/hive/testing/properties.py
+- [x] T081 [US6] Add shrinking support configuration in src/hive/testing/properties.py
+- [x] T082 [US6] Add `hive test generate-properties` CLI command in src/hive/cli/test.py
+- [x] T083 [US6] Update src/hive/testing/__init__.py to export property generator
+- [x] T084 [US6] Add unit tests in tests/unit/test_property_generator.py
 
-**Checkpoint**: `hive test generate-properties` produces runnable hypothesis tests
+**Checkpoint**: `hive test generate-properties` produces runnable hypothesis tests ✅
 
 ---
 
@@ -215,11 +215,11 @@
 - [ ] T086 [P] Add contract tests for testing module in tests/contract/test_testing_contract.py
 - [ ] T087 [P] Add integration tests for docs in tests/integration/test_docs_integration.py
 - [ ] T088 Run quickstart.md validation steps for all user stories
-- [ ] T089 Update CLAUDE.md with new commands and modules
-- [ ] T090 Verify all tests pass with `uv run pytest`
+- [x] T089 Update CLAUDE.md with new commands and modules
+- [x] T090 Verify all tests pass with `uv run pytest` (654 passed)
 - [ ] T090a Verify test coverage ≥90% for new modules with `uv run pytest --cov=src/hive/docs --cov=src/hive/testing --cov-fail-under=90`
-- [ ] T091 Verify type checking passes with `uv run pyright`
-- [ ] T092 Verify linting passes with `uv run ruff check .`
+- [x] T091 Verify type checking passes with `uv run pyright`
+- [x] T092 Verify linting passes with `uv run ruff check .`
 
 ---
 
