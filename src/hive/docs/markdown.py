@@ -162,6 +162,28 @@ class MarkdownGenerator(BaseDocumentationGenerator):
         Returns:
             Template context dictionary.
         """
+        # Pre-compute contracts and examples for each command/query
+        # so they're available when templates include sub-templates
+        command_contracts: dict[str, dict[str, list[str]]] = {}
+        command_examples: dict[str, str | None] = {}
+        for name, cmd in commands.items():
+            if config.include_contracts:
+                command_contracts[name] = self._get_contracts(name)
+            if config.include_examples:
+                command_examples[name] = self._get_examples(cmd)
+
+        query_contracts: dict[str, dict[str, list[str]]] = {}
+        query_examples: dict[str, str | None] = {}
+        for name, query in queries.items():
+            if config.include_contracts:
+                query_contracts[name] = self._get_contracts(name)
+            if config.include_examples:
+                query_examples[name] = self._get_examples(query)
+
+        entity_invariants: dict[str, list[str]] = {}
+        for name in entities:
+            entity_invariants[name] = self._get_invariants(name)
+
         return {
             "app_name": self.app.name,
             "app_description": getattr(self.app, "description", None),
@@ -172,6 +194,12 @@ class MarkdownGenerator(BaseDocumentationGenerator):
             "entities": entities,
             "include_examples": config.include_examples,
             "include_contracts": config.include_contracts,
+            # Pre-computed metadata for inline includes
+            "command_contracts": command_contracts,
+            "command_examples": command_examples,
+            "query_contracts": query_contracts,
+            "query_examples": query_examples,
+            "entity_invariants": entity_invariants,
         }
 
     def _render_single_document(

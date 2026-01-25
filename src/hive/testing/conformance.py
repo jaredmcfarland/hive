@@ -143,6 +143,9 @@ class ConformanceGenerator:
     ) -> list[ContractInfo]:
         """Extract contract information from a function.
 
+        Only extracts Hive contracts (@requires/@ensures from hive.contracts),
+        not raw deal contracts. This ensures generated tests expect CommandError.
+
         Args:
             func: Function to extract contracts from.
             target_name: Name of the target.
@@ -171,16 +174,9 @@ class ConformanceGenerator:
             source = self._get_lambda_source(condition) if condition else None
             contracts.append(ContractInfo(contract_type="ensures", message=message, source=source))
 
-        # Also check for deal contracts (legacy support)
-        deal_pre = getattr(func, "__deal_pre__", [])
-        for pre in deal_pre:
-            message = getattr(pre, "__deal_message__", f"{target_name} precondition")
-            contracts.append(ContractInfo(contract_type="requires", message=message))
-
-        deal_post = getattr(func, "__deal_post__", [])
-        for post in deal_post:
-            message = getattr(post, "__deal_message__", f"{target_name} postcondition")
-            contracts.append(ContractInfo(contract_type="ensures", message=message))
+        # Note: We intentionally skip raw deal contracts (__deal_pre__/__deal_post__)
+        # because they raise deal.PreContractError/PostContractError, not CommandError.
+        # Users should use hive.contracts.requires/ensures for Hive applications.
 
         return contracts
 

@@ -48,6 +48,8 @@ Data models.
 # Commands
 
 {% for name, command in commands.items() %}
+{% set contracts = command_contracts.get(name, {"requires": [], "ensures": []}) if include_contracts else {} %}
+{% set examples = command_examples.get(name) if include_examples else none %}
 {% include "command.md.j2" %}
 {% endfor %}
 {% endif %}
@@ -56,6 +58,8 @@ Data models.
 # Queries
 
 {% for name, query in queries.items() %}
+{% set contracts = query_contracts.get(name, {"requires": [], "ensures": []}) if include_contracts else {} %}
+{% set examples = query_examples.get(name) if include_examples else none %}
 {% include "query.md.j2" %}
 {% endfor %}
 {% endif %}
@@ -64,6 +68,7 @@ Data models.
 # Entities
 
 {% for name, entity in entities.items() %}
+{% set invariants = entity_invariants.get(name, []) %}
 {% include "entity.md.j2" %}
 {% endfor %}
 {% endif %}

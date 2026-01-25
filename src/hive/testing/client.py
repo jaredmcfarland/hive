@@ -36,13 +36,20 @@ class TestClient:
     """High-level testing interface for Hive applications.
 
     Provides a convenient way to test commands and queries without
-    boilerplate setup. Automatically provisions an in-memory SQLite
-    database and provides helpful error messages.
+    boilerplate setup. Uses MockExecutionContext internally for fast,
+    isolated unit testing.
+
+    Note:
+        The `db_url` parameter is currently reserved for future use.
+        This client always uses MockExecutionContext with mocked database
+        operations (ctx.db is an AsyncMock). For integration tests requiring
+        a real database, use MockExecutionContext directly with a real
+        SQLModel session, or wait for real database support in a future version.
 
     Attributes:
         app: The Hive application being tested.
         services: Mock services to inject.
-        db_url: Database connection URL.
+        db_url: Database URL (reserved for future real database support).
 
     Example:
         >>> from hive.testing import TestClient
@@ -71,7 +78,8 @@ class TestClient:
         Args:
             app: Hive application to test.
             services: Dictionary of service mocks to inject.
-            db_url: Database connection URL (defaults to in-memory SQLite).
+            db_url: Reserved for future database support. Currently ignored;
+                the client always uses MockExecutionContext with mocked db.
         """
         self.app = app
         self.services = services or {}
