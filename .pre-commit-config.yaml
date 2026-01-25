@@ -80,6 +80,7 @@ repos:
       # File validation
       - id: check-yaml
         name: check yaml syntax
+        args: [--unsafe]  # Allow Python-specific tags in mkdocs.yml
       - id: check-toml
         name: check toml syntax
       - id: check-json

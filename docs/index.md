@@ -168,8 +168,8 @@ $ hive tasks list-tasks --json
 
 This documentation follows the [llms.txt](https://llmstxt.org/) specification for AI-friendly content:
 
-- [`/llms.txt`](/llms.txt) - Documentation index for LLMs
-- [`/llms-full.txt`](/llms-full.txt) - Complete documentation in single file
+- [`llms.txt`](llms.txt) - Documentation index for LLMs
+- [`llms-full.txt`](llms-full.txt) - Complete documentation in single file
 
 ## Next Steps
 
