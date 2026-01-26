@@ -8,10 +8,12 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 import inspect
-from typing import Annotated, Any, Union, get_args, get_origin
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
 from beartype import beartype
 from beartype.roar import BeartypeCallHintParamViolation
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
 import typer
 
 from hive.core.registry import ApplicationRegistry
@@ -59,7 +61,48 @@ class CLIGenerator:
         for qry in self._registry.list_queries():
             self._add_query(cli, qry)
 
+        # Add TUI command if screens are registered
+        if self._registry.list_screens():
+            self._add_tui_command(cli)
+
         return cli
+
+    def _add_tui_command(self, cli: typer.Typer) -> None:
+        """Add the TUI launch command if screens are registered."""
+        app = self._app  # Capture for closure
+        generator = self  # Capture for closure
+
+        def tui_command() -> None:
+            """Launch the terminal user interface."""
+            asyncio.run(generator._run_tui_async(app))
+
+        cli.command(name="tui", help="Launch the terminal user interface")(tui_command)
+
+    async def _run_tui_async(self, app: Any) -> None:
+        """Run the TUI with an execution context for database access.
+
+        Args:
+            app: The Hive application.
+        """
+        from hive.generators.tui import generate_tui_app
+
+        settings = AppSettings()
+
+        # Ensure tables exist
+        await self._ensure_tables(settings.database_url)
+
+        # Run TUI within execution context for config/registry access
+        # session_on_enter=False: Don't create a session - individual operations
+        # will create their own ExecutionContexts for database access
+        async with ExecutionContext(
+            registry=self._registry,
+            settings=settings,
+            output_format=OutputFormat.TABLE,
+            command_name="tui",
+            session_on_enter=False,
+        ) as ctx:
+            tui_app = generate_tui_app(app, execution_context=ctx)
+            await tui_app.run_async()
 
     def _add_command(self, cli: typer.Typer, cmd: CommandRegistration) -> None:
         """Add a command to the Typer app."""
@@ -197,6 +240,11 @@ class CLIGenerator:
                     return self._get_base_type(arg)
             return str
 
+        # Handle Literal types - convert to str for Typer compatibility
+        # Typer doesn't support Literal directly; values become string choices
+        if origin is Literal:
+            return str
+
         # Handle other generic types (list, dict, etc.)
         if origin is not None:
             return origin
@@ -207,6 +255,34 @@ class CLIGenerator:
 
         return str
 
+    async def _ensure_tables(self, database_url: str) -> None:
+        """Ensure database tables exist.
+
+        Creates all SQLModel tables if they don't exist.
+
+        Args:
+            database_url: Database connection URL.
+        """
+        from sqlalchemy.pool import NullPool
+
+        # Ensure we're using the async driver for SQLite
+        if database_url.startswith("sqlite") and "aiosqlite" not in database_url:
+            database_url = database_url.replace("sqlite://", "sqlite+aiosqlite://")
+
+        # Use NullPool to avoid connection conflicts with the main session's StaticPool
+        if database_url.startswith("sqlite"):
+            engine = create_async_engine(
+                database_url,
+                connect_args={"check_same_thread": False},
+                poolclass=NullPool,
+            )
+        else:
+            engine = create_async_engine(database_url, poolclass=NullPool)
+
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        await engine.dispose()
+
     async def _execute_command(
         self,
         func: Callable[..., Any],
@@ -216,6 +292,9 @@ class CLIGenerator:
         kwargs: dict[str, Any],
     ) -> Any:
         """Execute an async command with context and beartype validation."""
+        # Ensure tables exist before executing
+        await self._ensure_tables(settings.database_url)
+
         async with ExecutionContext(
             settings=settings,
             output_format=output_format,

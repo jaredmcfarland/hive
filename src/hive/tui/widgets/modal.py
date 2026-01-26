@@ -7,7 +7,7 @@ dynamically generated form fields based on parameter types.
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, get_args, get_origin, override
 
 from textual import on
 from textual.app import ComposeResult
@@ -35,6 +35,34 @@ def get_form_parameters(parameters: list[ParameterInfo]) -> list[ParameterInfo]:
     return [p for p in parameters if p.name != "ctx"]
 
 
+def _get_base_type(param_type: type[Any] | Any) -> type[Any]:
+    """Extract the base type from potentially Annotated types.
+
+    Handles types like PositiveInt (Annotated[int, ...]) by extracting
+    the underlying int type.
+
+    Args:
+        param_type: The parameter type, possibly Annotated.
+
+    Returns:
+        The base type (e.g., int, str, float, bool).
+    """
+    origin = get_origin(param_type)
+
+    # Handle Annotated types (e.g., Annotated[int, Is[...]])
+    if origin is Annotated:
+        args = get_args(param_type)
+        if args:
+            return _get_base_type(args[0])  # Recurse in case of nested Annotated
+
+    # Handle other generic types (e.g., list[int] -> list)
+    if origin is not None:
+        return origin
+
+    # Already a base type
+    return param_type
+
+
 def get_widget_for_parameter(
     param: ParameterInfo,
 ) -> tuple[str, dict[str, Any]]:
@@ -55,39 +83,58 @@ def get_widget_for_parameter(
     """
     config: dict[str, Any] = {}
 
+    # Get the base type (handles Annotated types like PositiveInt)
+    base_type = _get_base_type(param.type)
+
     # Set default/initial value if present
     if param.has_default and param.default is not None:
         config["value"] = param.default
-    elif param.has_default and param.type is bool:
+    elif param.has_default and base_type is bool:
         config["value"] = param.default  # Allow False as explicit default
 
     # Set placeholder from help text
     if param.help:
         config["placeholder"] = param.help
 
-    # Determine widget type based on parameter type
-    param_type = param.type
-
-    if param_type is bool:
+    if base_type is bool:
         return ("Switch", config)
 
     # Check for Enum types (isinstance needed for runtime type safety)
-    if isinstance(param_type, type) and issubclass(param_type, Enum):  # pyright: ignore[reportUnnecessaryIsInstance]
+    if isinstance(base_type, type) and issubclass(base_type, Enum):  # pyright: ignore[reportUnnecessaryIsInstance]
         # Generate options from enum members
-        options = [(member.name, member) for member in param_type]
+        options = [(member.name, member) for member in base_type]
         config["options"] = options
         return ("Select", config)
 
-    if param_type is int:
+    if base_type is int:
         config["type"] = "integer"
         return ("Input", config)
 
-    if param_type is float:
+    if base_type is float:
         config["type"] = "number"
         return ("Input", config)
 
     # Default to string input
     return ("Input", config)
+
+
+def _get_docstring_summary(docstring: str | None) -> str | None:
+    """Extract the first line/summary from a docstring.
+
+    Args:
+        docstring: Full docstring text.
+
+    Returns:
+        First non-empty line of the docstring, or None.
+    """
+    if not docstring:
+        return None
+    # Get first non-empty line (the summary)
+    for line in docstring.strip().split("\n"):
+        stripped = line.strip()
+        if stripped:
+            return stripped
+    return None
 
 
 def generate_form_config(cmd_reg: CommandRegistration) -> dict[str, Any]:
@@ -115,9 +162,12 @@ def generate_form_config(cmd_reg: CommandRegistration) -> dict[str, Any]:
             }
         )
 
+    # Use only the docstring summary (first line) as the title
+    title = _get_docstring_summary(cmd_reg.docstring) or cmd_reg.name
+
     return {
         "command_name": cmd_reg.name,
-        "title": cmd_reg.docstring or cmd_reg.name,
+        "title": title,
         "fields": fields,
         "confirmation_only": len(fields) == 0,
     }
@@ -136,23 +186,24 @@ def extract_value(param: ParameterInfo, raw_value: Any) -> Any:
     Raises:
         ValueError: If conversion fails.
     """
-    param_type = param.type
+    # Get base type (handles Annotated types like PositiveInt)
+    base_type = _get_base_type(param.type)
 
-    if param_type is bool:
+    if base_type is bool:
         return bool(raw_value)
 
     # Check for Enum types (isinstance needed for runtime type safety)
-    if isinstance(param_type, type) and issubclass(param_type, Enum):  # pyright: ignore[reportUnnecessaryIsInstance]
+    if isinstance(base_type, type) and issubclass(base_type, Enum):  # pyright: ignore[reportUnnecessaryIsInstance]
         return raw_value  # Already an enum value from Select
 
-    if param_type is int:
+    if base_type is int:
         try:
             return int(raw_value)
         except (ValueError, TypeError) as e:
             msg = f"Invalid integer value: {raw_value}"
             raise ValueError(msg) from e
 
-    if param_type is float:
+    if base_type is float:
         try:
             return float(raw_value)
         except (ValueError, TypeError) as e:
@@ -229,11 +280,34 @@ class ParameterModal(ModalScreen[dict[str, Any] | None]):
     }
 
     ParameterModal .form-field {
+        height: auto;
         margin-bottom: 1;
     }
 
     ParameterModal .field-label {
+        height: 1;
         margin-bottom: 0;
+    }
+
+    ParameterModal Input {
+        width: 100%;
+        height: 3;
+        border: tall $primary;
+        background: $background;
+        padding: 0 1;
+    }
+
+    ParameterModal Input:focus {
+        border: tall $accent;
+    }
+
+    ParameterModal Switch {
+        height: 1;
+    }
+
+    ParameterModal Select {
+        width: 100%;
+        height: 3;
     }
 
     ParameterModal .required-marker {
@@ -241,20 +315,24 @@ class ParameterModal(ModalScreen[dict[str, Any] | None]):
     }
 
     ParameterModal #button-row {
+        height: 3;
         margin-top: 1;
         align: center middle;
     }
 
     ParameterModal Button {
+        min-width: 12;
         margin: 0 1;
     }
 
     ParameterModal #submit-btn {
         background: $success;
+        color: $text;
     }
 
     ParameterModal #cancel-btn {
         background: $error;
+        color: $text;
     }
     """
 

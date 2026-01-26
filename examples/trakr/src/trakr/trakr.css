@@ -1,0 +1,45 @@
+/* Trakr TUI Styles */
+
+/* Layout */
+#dashboard {
+  padding: 1;
+}
+
+.section {
+  border: solid $primary;
+  padding: 1;
+  margin-bottom: 1;
+}
+
+.section-title {
+  text-style: bold;
+  color: $primary;
+  margin-bottom: 1;
+}
+
+#actions {
+  dock: bottom;
+  height: 3;
+  padding: 1;
+  background: $surface;
+}
+
+/* Timer Display */
+#current-timer {
+  text-style: bold;
+  color: $success;
+}
+
+#timer-hint {
+  color: $text-muted;
+}
+
+/* Tables */
+HiveDataTable {
+  height: 100%;
+}
+
+/* Container spacing */
+#time-container {
+  padding: 1;
+}

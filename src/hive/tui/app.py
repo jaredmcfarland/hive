@@ -212,9 +212,9 @@ class HiveApp(App[None]):
             if hasattr(screen, "_registry"):
                 screen._registry = self._hive_registry  # type: ignore[attr-defined]  # noqa: SLF001
 
-        # Initialize screen context if execution context is available
+        # Always initialize screen context for navigation and notifications
         # (intentional internal access - _set_context is designed to be called by HiveApp)
-        if isinstance(screen, HiveScreen) and self._execution_context is not None:
+        if isinstance(screen, HiveScreen):
             ctx = ScreenContext(self._execution_context, self, screen)
             screen._set_context(ctx)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
@@ -279,11 +279,12 @@ class HiveApp(App[None]):
         from hive.runtime.output import OutputFormat  # noqa: PLC0415
 
         try:
-            # Create execution context (same as CLI)
+            # Create execution context for TUI command execution
             async with ExecutionContext(
                 registry=self._hive_registry,
                 output_format=OutputFormat.TABLE,
                 command_name=command.name,
+                allow_concurrent=True,
             ) as ctx:
                 # Execute the command function
                 result = await command.func(ctx, **parameters)

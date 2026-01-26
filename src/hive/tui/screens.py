@@ -57,14 +57,14 @@ class ScreenContext:
 
     def __init__(
         self,
-        base_context: ExecutionContext,
+        base_context: ExecutionContext | None,
         app: HiveApp,
         screen: HiveScreen[Any],
     ) -> None:
         """Initialize screen context.
 
         Args:
-            base_context: The underlying execution context.
+            base_context: The underlying execution context (optional).
             app: The parent HiveApp.
             screen: The current screen.
         """
@@ -72,25 +72,53 @@ class ScreenContext:
         self._app = app
         self._screen = screen
 
+    def _require_base_context(self) -> ExecutionContext:
+        """Get the base context, raising if not available.
+
+        Returns:
+            The base ExecutionContext.
+
+        Raises:
+            RuntimeError: If no base context is available.
+        """
+        if self._base is None:
+            msg = "Database/service access requires ExecutionContext. Pass execution_context to HiveApp."
+            raise RuntimeError(msg)
+        return self._base
+
     @property
     def db(self) -> Any:
-        """Database session from base context."""
-        return self._base.db
+        """Database session - not available in TUI context.
+
+        Raises:
+            RuntimeError: Always raises - screens should create their own
+                ExecutionContext for database operations.
+        """
+        msg = (
+            "Database access through ScreenContext is not supported. "
+            "Create your own ExecutionContext for database operations:\n\n"
+            "    async with ExecutionContext(\n"
+            "        registry=self._registry,\n"
+            "        allow_concurrent=True,\n"
+            "    ) as ctx:\n"
+            "        result = await ctx.db.exec(...)"
+        )
+        raise RuntimeError(msg)
 
     @property
     def config(self) -> Any:
         """Application configuration from base context."""
-        return self._base.config
+        return self._require_base_context().config
 
     @property
     def output(self) -> Any:
         """Output formatter from base context."""
-        return self._base.output
+        return self._require_base_context().output
 
     @property
     def services(self) -> Any:
         """Service proxy from base context."""
-        return self._base.services
+        return self._require_base_context().services
 
     async def navigate(self, screen_name: str) -> None:
         """Navigate to a named screen.

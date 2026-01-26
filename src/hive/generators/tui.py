@@ -13,11 +13,13 @@ from hive.tui.app import HiveApp
 if TYPE_CHECKING:
     from hive.app import App
     from hive.core.types import ScreenRegistration
+    from hive.runtime.context import ExecutionContext
 
 
 def generate_tui_app(
     app: App,
     *,
+    execution_context: ExecutionContext | None = None,
     css_path: str | None = None,
 ) -> HiveApp:
     """Generate a Textual TUI application from a Hive app.
@@ -27,6 +29,7 @@ def generate_tui_app(
 
     Args:
         app: The Hive application with registered screens.
+        execution_context: Optional execution context for database/service access.
         css_path: Optional path to custom CSS file.
 
     Returns:
@@ -59,6 +62,7 @@ def generate_tui_app(
 
     return HiveApp(
         registry=app.registry,
+        execution_context=execution_context,
         title=app.name,
         css_path=css_path,
     )
