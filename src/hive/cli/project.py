@@ -52,7 +52,7 @@ authors = [
     { name = "{{author}}" }
 ]
 dependencies = [
-    "hive-framework>=0.1.0",
+    {{hive_dep}},
 ]
 
 [project.optional-dependencies]
@@ -81,7 +81,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 asyncio_mode = "auto"
-"""
+{{uv_sources}}"""
 
 
 def _get_app_template() -> str:
@@ -93,13 +93,15 @@ def _get_app_template() -> str:
 
 from __future__ import annotations
 
+from typing import Any
+
 from hive import App, command, query
 
 app = App("{{name}}")
 
 
 @command(app)
-async def hello(ctx, name: str = "World") -> str:
+async def hello(ctx: Any, name: str = "World") -> str:  # noqa: ARG001
     """Say hello to someone.
 
     Args:
@@ -113,7 +115,7 @@ async def hello(ctx, name: str = "World") -> str:
 
 
 @query(app)
-async def status(ctx) -> dict:
+async def status(ctx: Any) -> dict[str, str]:  # noqa: ARG001
     """Get application status.
 
     Args:
@@ -127,9 +129,9 @@ async def status(ctx) -> dict:
 
 def cli() -> None:
     """CLI entry point."""
-    from hive.generators.cli import generate_cli
+    from hive.generators.cli import CLIGenerator
 
-    typer_app = generate_cli(app)
+    typer_app = CLIGenerator(app).generate()
     typer_app()
 
 
@@ -245,13 +247,14 @@ def _normalize_project_name(name: str) -> str:
     return normalized
 
 
-def create_project(
+def create_project(  # noqa: C901, PLR0913
     name: str,
     path: str | Path | None = None,
     description: str = "A Hive application",
     author: str = "",
     features: list[str] | None = None,
     force: bool = False,
+    local: bool = False,
 ) -> str:
     """Create a new Hive project.
 
@@ -262,6 +265,7 @@ def create_project(
         author: Author name.
         features: Optional features to enable (tui, mcp, rest, all).
         force: Overwrite existing directory.
+        local: Use path dependency for hive-framework (for development within hive repo).
 
     Returns:
         Absolute path to created project.
@@ -308,12 +312,26 @@ def create_project(
 
     optional_deps_str = "\n".join(optional_deps) if optional_deps else ""
 
+    # Hive dependency (always listed as PyPI package)
+    hive_dep = '"hive-framework>=0.1.0"'
+
+    # For local development, add uv sources to redirect to local hive
+    if local:
+        uv_sources = """
+[tool.uv.sources]
+hive-framework = { path = "../..", editable = true }
+"""
+    else:
+        uv_sources = ""
+
     # Template variables
     variables = {
         "{{name}}": name,
         "{{description}}": description,
         "{{author}}": author or "Unknown",
         "{{optional_deps}}": optional_deps_str,
+        "{{hive_dep}}": hive_dep,
+        "{{uv_sources}}": uv_sources,
     }
 
     def substitute(content: str) -> str:
@@ -647,6 +665,10 @@ def new_command(  # noqa: PLR0913
         bool,
         typer.Option("--force", help="Overwrite existing directory"),
     ] = False,
+    local: Annotated[
+        bool,
+        typer.Option("--local", help="Use path dependency for local hive development"),
+    ] = False,
     json_output: Annotated[
         bool,
         typer.Option("--json", help="Output as JSON"),
@@ -657,6 +679,7 @@ def new_command(  # noqa: PLR0913
     Examples:
         hive new myapp
         hive new myapp --features tui,mcp
+        hive new myapp --local  # For development within hive repo
         hive new myapp --author "John Doe" --description "My app"
     """
     feature_list = features.split(",") if features else None
@@ -672,6 +695,7 @@ def new_command(  # noqa: PLR0913
             author=author,
             features=feature_list,
             force=force,
+            local=local,
         )
 
         if json_output:

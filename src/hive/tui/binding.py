@@ -11,6 +11,8 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from hive.errors import ConfigurationError
+from hive.runtime.context import ExecutionContext
+from hive.runtime.output import OutputFormat
 
 if TYPE_CHECKING:
     from hive.core.registry import ApplicationRegistry
@@ -51,14 +53,14 @@ class QueryBindingExecutor:
         self,
         binding: QueryBinding,
         *,
-        ctx: Any,
+        ctx: Any,  # noqa: ARG002 - kept for API compatibility
         force_refresh: bool = False,
     ) -> Any:
         """Execute a query binding.
 
         Args:
             binding: The query binding to execute.
-            ctx: Execution context for the query.
+            ctx: Screen context (unused - we create our own ExecutionContext).
             force_refresh: If True, bypass cache.
 
         Returns:
@@ -81,22 +83,29 @@ class QueryBindingExecutor:
         if query_reg is None:
             raise ConfigurationError(f"Query '{binding.query_name}' not found in registry")
 
-        # Execute query
-        result = await query_reg.func(ctx)
+        # Execute query with a proper ExecutionContext for database access
+        # We create our own context since ScreenContext doesn't have a db session
+        async with ExecutionContext(
+            registry=self._registry,
+            output_format=OutputFormat.TABLE,
+            command_name=binding.query_name,
+            allow_concurrent=True,
+        ) as exec_ctx:
+            result = await query_reg.func(exec_ctx)
 
-        # Cache if TTL specified
-        if query_reg.cache_ttl is not None:
-            self._set_cached(
-                binding.query_name,
-                result,
-                ttl=query_reg.cache_ttl,
-            )
+            # Cache if TTL specified
+            if query_reg.cache_ttl is not None:
+                self._set_cached(
+                    binding.query_name,
+                    result,
+                    ttl=query_reg.cache_ttl,
+                )
 
-        # Apply transform
-        if binding.transform:
-            result = binding.transform(result)
+            # Apply transform
+            if binding.transform:
+                result = binding.transform(result)
 
-        return result
+            return result
 
     def _get_cached(self, query_name: str) -> Any | None:
         """Get cached result if valid.

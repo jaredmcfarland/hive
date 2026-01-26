@@ -7,6 +7,7 @@ the application registry.
 from __future__ import annotations
 
 from collections.abc import Callable
+import logging
 from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from textual import on
@@ -28,6 +29,11 @@ if TYPE_CHECKING:
 # Minimum terminal size for proper widget display (SC-006)
 MIN_TERMINAL_WIDTH = 80
 MIN_TERMINAL_HEIGHT = 24
+
+# Maximum length for notification messages before truncation
+MAX_NOTIFICATION_LENGTH = 100
+
+logger = logging.getLogger(__name__)
 
 
 class HiveApp(App[None]):
@@ -212,9 +218,9 @@ class HiveApp(App[None]):
             if hasattr(screen, "_registry"):
                 screen._registry = self._hive_registry  # type: ignore[attr-defined]  # noqa: SLF001
 
-        # Initialize screen context if execution context is available
+        # Always initialize screen context for navigation and notifications
         # (intentional internal access - _set_context is designed to be called by HiveApp)
-        if isinstance(screen, HiveScreen) and self._execution_context is not None:
+        if isinstance(screen, HiveScreen):
             ctx = ScreenContext(self._execution_context, self, screen)
             screen._set_context(ctx)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
@@ -279,11 +285,12 @@ class HiveApp(App[None]):
         from hive.runtime.output import OutputFormat  # noqa: PLC0415
 
         try:
-            # Create execution context (same as CLI)
+            # Create execution context for TUI command execution
             async with ExecutionContext(
                 registry=self._hive_registry,
                 output_format=OutputFormat.TABLE,
                 command_name=command.name,
+                allow_concurrent=True,
             ) as ctx:
                 # Execute the command function
                 result = await command.func(ctx, **parameters)
@@ -291,13 +298,14 @@ class HiveApp(App[None]):
                 # Show success notification
                 if result is not None:
                     message = str(result)
-                    if len(message) > 100:  # noqa: PLR2004
-                        message = message[:97] + "..."
+                    if len(message) > MAX_NOTIFICATION_LENGTH:
+                        message = message[: MAX_NOTIFICATION_LENGTH - 3] + "..."
                     self.notify(f"Success: {message}", severity="information")
                 else:
                     self.notify(f"Command '{command.name}' executed", severity="information")
 
-        except Exception as e:  # noqa: BLE001
-            # Show error notification
+        except Exception as e:
+            # Log full exception for debugging, show user-friendly message in UI
+            logger.exception("Command execution failed: %s", command.name)
             error_message = str(e)
             self.notify(error_message, severity="error")

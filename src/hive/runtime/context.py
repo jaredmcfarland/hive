@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 from types import TracebackType
 from typing import TYPE_CHECKING, Self
 
@@ -30,7 +32,7 @@ class ExecutionContext:
             ctx.output.result(result)
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         settings: AppSettings | None = None,
         output_format: OutputFormat = OutputFormat.TABLE,
@@ -38,6 +40,9 @@ class ExecutionContext:
         quiet: bool = False,
         yes: bool = False,
         registry: ApplicationRegistry | None = None,
+        *,
+        allow_concurrent: bool = False,
+        session_on_enter: bool = True,
     ) -> None:
         """Initialize the execution context.
 
@@ -48,6 +53,10 @@ class ExecutionContext:
             quiet: Suppress non-essential output.
             yes: Bypass confirmation prompts.
             registry: Application registry for service access.
+            allow_concurrent: If True, allow concurrent database sessions.
+                Set to True for TUI applications.
+            session_on_enter: If False, skip session creation on __aenter__.
+                Useful for TUI contexts that only need config/registry access.
         """
         self._settings = settings or AppSettings()
         self._output_format = output_format
@@ -55,10 +64,13 @@ class ExecutionContext:
         self._quiet = quiet
         self._yes = yes
         self._registry = registry
+        self._allow_concurrent = allow_concurrent
+        self._session_on_enter = session_on_enter
 
         self._session_factory = create_session_factory(
             self._settings.database_url,
             echo=self._settings.debug,
+            allow_concurrent=allow_concurrent,
         )
         self._session: AsyncSession | None = None
         self._output = OutputFormatter(format=output_format, quiet=quiet)
@@ -141,8 +153,14 @@ class ExecutionContext:
         self._rolled_back = True
 
     async def __aenter__(self) -> Self:
-        """Enter the context, creating a database session."""
-        self._session = self._session_factory()
+        """Enter the context, optionally creating a database session.
+
+        Session creation is skipped if session_on_enter=False was passed
+        to __init__. This is useful for TUI contexts that only need
+        config/registry access while sub-operations create their own sessions.
+        """
+        if self._session_on_enter:
+            self._session = self._session_factory()
         return self
 
     async def __aexit__(
@@ -176,7 +194,10 @@ class ExecutionContext:
                 await self._session.rollback()
                 self._rolled_back = True
         finally:
-            await self._session.close()
+            # Suppress CancelledError during cleanup - this happens when
+            # the event loop is shutting down (e.g., user quits TUI)
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._session.close()
             self._session = None
             self._closed = True
 
