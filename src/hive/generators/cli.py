@@ -258,16 +258,29 @@ class CLIGenerator:
     async def _ensure_tables(self, database_url: str) -> None:
         """Ensure database tables exist.
 
-        Creates all SQLModel tables if they don't exist.
+        Creates all SQLModel tables if they don't exist. For file-based SQLite
+        databases, also creates the parent directory if needed.
 
         Args:
             database_url: Database connection URL.
         """
+        from pathlib import Path
+
         from sqlalchemy.pool import NullPool
 
         # Ensure we're using the async driver for SQLite
         if database_url.startswith("sqlite") and "aiosqlite" not in database_url:
             database_url = database_url.replace("sqlite://", "sqlite+aiosqlite://")
+
+        # For file-based SQLite, ensure parent directory exists
+        if database_url.startswith("sqlite"):
+            # Extract path from sqlite+aiosqlite:///path or sqlite:///path
+            # Format: sqlite[+aiosqlite]:///[path] where path can be relative or absolute
+            path_part = database_url.split("///", 1)[-1]
+            # Skip in-memory databases (empty path or :memory:)
+            if path_part and path_part != ":memory:":
+                db_path = Path(path_part).expanduser()
+                db_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Use NullPool to avoid connection conflicts with the main session's StaticPool
         if database_url.startswith("sqlite"):

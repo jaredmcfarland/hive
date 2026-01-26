@@ -12,15 +12,15 @@ from hive.tui.screens import DataError, DataLoaded, HiveScreen, ScreenContext
 class TestScreenContext:
     """Tests for ScreenContext class."""
 
-    def test_db_property_delegates_to_base(self) -> None:
-        """ScreenContext.db returns base context db."""
+    def test_db_property_raises_runtime_error(self) -> None:
+        """ScreenContext.db raises RuntimeError with guidance."""
         base = MagicMock()
-        base.db = MagicMock()
         app = MagicMock()
         screen = MagicMock()
 
         ctx = ScreenContext(base, app, screen)
-        assert ctx.db is base.db
+        with pytest.raises(RuntimeError, match="Database access through ScreenContext"):
+            _ = ctx.db
 
     def test_config_property_delegates_to_base(self) -> None:
         """ScreenContext.config returns base context config."""
