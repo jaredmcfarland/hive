@@ -9,9 +9,10 @@ from hive.core.decorators import command
 from hive.errors import CommandError
 from hive.runtime.context import ExecutionContext
 from hive.types import NonEmptyStr, PositiveInt
+from sqlmodel import select
 
 from trakr.app import app
-from trakr.entities import get_store
+from trakr.entities import TimeEntry
 
 
 @command(app)
@@ -44,8 +45,8 @@ async def sync_issue(
         Synced 2.5 hours to acme/website-redesign#42
         Comment: https://github.com/acme/website-redesign/issues/42#issuecomment-123
     """
-    entries = get_store("time_entry")
-    entry = entries.get(entry_id)
+    result = await ctx.db.execute(select(TimeEntry).where(TimeEntry.id == entry_id))
+    entry = result.scalar_one_or_none()
 
     if entry is None:
         raise CommandError(f"Entry {entry_id} not found", exit_code=1)

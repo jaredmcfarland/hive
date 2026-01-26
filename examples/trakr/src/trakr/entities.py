@@ -135,7 +135,7 @@ class TimeEntry(SQLModel, table=True):
     description: str = Field(description="Work description")
     started_at: datetime = Field(default_factory=datetime.now, description="Start time")
     ended_at: datetime | None = Field(default=None, description="End time (None = running)")
-    status: TimeEntryStatus = Field(default=TimeEntryStatus.DRAFT, description="/Billing status")
+    status: TimeEntryStatus = Field(default=TimeEntryStatus.DRAFT, description="Billing status")
 
     # Relationships
     project: Project | None = Relationship(back_populates="time_entries")

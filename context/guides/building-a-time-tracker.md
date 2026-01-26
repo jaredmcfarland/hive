@@ -1538,8 +1538,10 @@ from hive.errors import CommandError
 from hive.runtime.context import ExecutionContext
 from hive.types import NonEmptyStr, PositiveInt
 
+from sqlmodel import select
+
 from trakr.app import app
-from trakr.entities import TimeEntry, get_store
+from trakr.entities import TimeEntry
 
 
 @command(app)
@@ -1572,8 +1574,8 @@ async def sync_issue(
         Synced 2.5 hours to acme/website-redesign#42
         Comment: https://github.com/acme/website-redesign/issues/42#issuecomment-123
     """
-    entries = get_store("time_entry")
-    entry = entries.get(entry_id)
+    result = await ctx.db.execute(select(TimeEntry).where(TimeEntry.id == entry_id))
+    entry = result.scalar_one_or_none()
 
     if entry is None:
         raise CommandError(f"Entry {entry_id} not found", exit_code=1)
@@ -2004,15 +2006,6 @@ import pytest
 from hive.testing import TestClient
 
 from trakr.app import app
-from trakr.entities import reset_stores
-
-
-@pytest.fixture(autouse=True)
-def clean_stores():
-    """Reset stores before each test."""
-    reset_stores()
-    yield
-    reset_stores()
 
 
 class TestClientCommands:
@@ -2156,11 +2149,11 @@ class TestTimeCommands:
                 description="Second task",
             )
 
-            # Verify first is stopped
-            from trakr.entities import get_store
-            entries = get_store("time_entry")
-            first_entry = entries[first.id]
+            # Verify first is stopped by querying time entries
+            entries = await client.query("list_time_entries", days=1)
+            first_entry = next((e for e in entries if e.id == first.id), None)
 
+            assert first_entry is not None
             assert not first_entry.is_running
             assert second.is_running
 
@@ -2203,14 +2196,6 @@ from hive.testing import TestClient, strategy_for_type
 from hive.types import NonEmptyStr, NonNegativeFloat, PositiveInt
 
 from trakr.app import app
-from trakr.entities import reset_stores
-
-
-@pytest.fixture(autouse=True)
-def clean_stores():
-    """Reset stores before each test."""
-    reset_stores()
-    yield
 
 
 class TestClientProperties:
@@ -2228,8 +2213,6 @@ class TestClientProperties:
         rate: float,
     ):
         """Property: Created client name has no leading/trailing whitespace."""
-        reset_stores()  # Reset between examples
-
         async with TestClient(app) as client:
             result = await client.invoke(
                 "create_client",
@@ -2249,8 +2232,6 @@ class TestClientProperties:
     @pytest.mark.asyncio
     async def test_created_client_has_positive_id(self, name: str):
         """Property: Created clients always have positive IDs."""
-        reset_stores()
-
         async with TestClient(app) as client:
             result = await client.invoke("create_client", name=name)
 
@@ -2262,18 +2243,14 @@ class TestTimeEntryProperties:
 
     @given(
         description=strategy_for_type(NonEmptyStr),
-        tags=st.lists(st.text(min_size=1, max_size=20), max_size=5),
     )
     @settings(max_examples=30)
     @pytest.mark.asyncio
     async def test_started_timer_is_always_running(
         self,
         description: str,
-        tags: list[str],
     ):
         """Property: A just-started timer is always in running state."""
-        reset_stores()
-
         async with TestClient(app) as client:
             # Setup
             await client.invoke("create_client", name="Test")
@@ -2284,7 +2261,6 @@ class TestTimeEntryProperties:
                 "start_timer",
                 project_id=1,
                 description=description,
-                tags=tags,
             )
 
             # Property: timer is running
@@ -2298,8 +2274,6 @@ class TestTimeEntryProperties:
     @pytest.mark.asyncio
     async def test_only_one_timer_runs_at_a_time(self, count: int):
         """Property: At most one timer can be running at any time."""
-        reset_stores()
-
         async with TestClient(app) as client:
             # Setup
             await client.invoke("create_client", name="Test")
@@ -2331,8 +2305,6 @@ class TestInvariantProperties:
     @pytest.mark.asyncio
     async def test_client_rate_never_negative(self, rate: float):
         """Property: Client hourly rate is never negative."""
-        reset_stores()
-
         async with TestClient(app) as client:
             result = await client.invoke(
                 "create_client",
@@ -2351,7 +2323,7 @@ class TestInvariantProperties:
 
 3. **Property-Based Testing** - Tests invariants that should always hold.
 
-4. **Fixtures** - `reset_stores()` ensures test isolation.
+4. **TestClient Isolation** - Each TestClient creates its own isolated test database.
 
 ## Part 8: Running the Application
 

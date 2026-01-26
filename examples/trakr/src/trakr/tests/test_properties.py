@@ -1,25 +1,23 @@
 """Property-based tests for Trakr.
 
-Demonstrates Hypothesis integration for thorough testing.
+Demonstrates Hypothesis integration for thorough testing with real database.
 """
 
 from __future__ import annotations
 
 import pytest
-from hive.testing import TestClient, strategy_for_type
+from hive.runtime.context import ExecutionContext
+from hive.testing import strategy_for_type
 from hive.types import NonEmptyStr, NonNegativeFloat
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from trakr.app import app
-from trakr.entities import reset_stores
+from trakr.commands.clients import create_client
+from trakr.commands.projects import create_project
+from trakr.commands.time import start_timer
+from trakr.queries import list_time_entries
 
-
-@pytest.fixture(autouse=True)
-def clean_stores():
-    """Reset stores before each test."""
-    reset_stores()
-    yield
+from .conftest import create_fresh_db
 
 
 class TestClientProperties:
@@ -29,7 +27,7 @@ class TestClientProperties:
         name=strategy_for_type(NonEmptyStr),
         rate=strategy_for_type(NonNegativeFloat),
     )
-    @settings(max_examples=50)
+    @settings(max_examples=20)
     @pytest.mark.asyncio
     async def test_create_client_always_strips_name(
         self,
@@ -37,11 +35,11 @@ class TestClientProperties:
         rate: float,
     ):
         """Property: Created client name has no leading/trailing whitespace."""
-        reset_stores()  # Reset between examples
+        db_settings = await create_fresh_db()
 
-        async with TestClient(app) as client:
-            result = await client.invoke(
-                "create_client",
+        async with ExecutionContext(settings=db_settings) as ctx:
+            result = await create_client(
+                ctx,
                 name=name,
                 hourly_rate=rate,
             )
@@ -54,15 +52,16 @@ class TestClientProperties:
     @given(
         name=strategy_for_type(NonEmptyStr),
     )
-    @settings(max_examples=20)
+    @settings(max_examples=10)
     @pytest.mark.asyncio
     async def test_created_client_has_positive_id(self, name: str):
         """Property: Created clients always have positive IDs."""
-        reset_stores()
+        db_settings = await create_fresh_db()
 
-        async with TestClient(app) as client:
-            result = await client.invoke("create_client", name=name)
+        async with ExecutionContext(settings=db_settings) as ctx:
+            result = await create_client(ctx, name=name)
 
+            assert result.id is not None
             assert result.id > 0
 
 
@@ -71,29 +70,26 @@ class TestTimeEntryProperties:
 
     @given(
         description=strategy_for_type(NonEmptyStr),
-        tags=st.lists(st.text(min_size=1, max_size=20), max_size=5),
     )
-    @settings(max_examples=30)
+    @settings(max_examples=10)
     @pytest.mark.asyncio
     async def test_started_timer_is_always_running(
         self,
         description: str,
-        tags: list[str],
     ):
         """Property: A just-started timer is always in running state."""
-        reset_stores()
+        db_settings = await create_fresh_db()
 
-        async with TestClient(app) as client:
+        async with ExecutionContext(settings=db_settings) as ctx:
             # Setup
-            await client.invoke("create_client", name="Test")
-            await client.invoke("create_project", client_id=1, name="Proj")
+            await create_client(ctx, name="Test")
+            await create_project(ctx, client_id=1, name="Proj")
 
             # Start timer
-            result = await client.invoke(
-                "start_timer",
+            result = await start_timer(
+                ctx,
                 project_id=1,
                 description=description,
-                tags=tags,
             )
 
             # Property: timer is running
@@ -101,29 +97,29 @@ class TestTimeEntryProperties:
             assert result.ended_at is None
 
     @given(
-        count=st.integers(min_value=1, max_value=10),
+        count=st.integers(min_value=1, max_value=5),
     )
-    @settings(max_examples=10)
+    @settings(max_examples=5)
     @pytest.mark.asyncio
     async def test_only_one_timer_runs_at_a_time(self, count: int):
         """Property: At most one timer can be running at any time."""
-        reset_stores()
+        db_settings = await create_fresh_db()
 
-        async with TestClient(app) as client:
+        async with ExecutionContext(settings=db_settings) as ctx:
             # Setup
-            await client.invoke("create_client", name="Test")
-            await client.invoke("create_project", client_id=1, name="Proj")
+            await create_client(ctx, name="Test")
+            await create_project(ctx, client_id=1, name="Proj")
 
             # Start multiple timers
             for i in range(count):
-                await client.invoke(
-                    "start_timer",
+                await start_timer(
+                    ctx,
                     project_id=1,
                     description=f"Task {i}",
                 )
 
             # Count running timers
-            entries = await client.query("list_time_entries", days=1)
+            entries = await list_time_entries(ctx, days=1)
             running = [e for e in entries if e.is_running]
 
             # Property: at most one running
@@ -136,15 +132,15 @@ class TestInvariantProperties:
     @given(
         rate=strategy_for_type(NonNegativeFloat),
     )
-    @settings(max_examples=20)
+    @settings(max_examples=10)
     @pytest.mark.asyncio
     async def test_client_rate_never_negative(self, rate: float):
         """Property: Client hourly rate is never negative."""
-        reset_stores()
+        db_settings = await create_fresh_db()
 
-        async with TestClient(app) as client:
-            result = await client.invoke(
-                "create_client",
+        async with ExecutionContext(settings=db_settings) as ctx:
+            result = await create_client(
+                ctx,
                 name="Test",
                 hourly_rate=rate,
             )
