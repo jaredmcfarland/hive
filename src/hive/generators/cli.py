@@ -304,7 +304,11 @@ class CLIGenerator:
         command_name: str,
         kwargs: dict[str, Any],
     ) -> Any:
-        """Execute an async command with context and beartype validation."""
+        """Execute an async command with context and beartype validation.
+
+        Returns:
+            Command result (type varies by command).
+        """
         # Ensure tables exist before executing
         await self._ensure_tables(settings.database_url)
 
